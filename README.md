@@ -1,4 +1,4 @@
 # Setup
 
-- Install npyscreen from here git@github.com:jwoglom/npyscreen.git
+- Install npyscreen from here https://github.com/jwoglom/npyscreen
 - `pip3 install curses`

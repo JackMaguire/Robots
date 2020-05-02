@@ -1,4 +1,5 @@
 // g++ robots.cc -std=c++2a -c -o robots.so
+// g++ robots.cc -std=c++2a -c -o robots.so -Wall -pedantic -Wshadow
 
 #include <array>
 #include <vector>
@@ -15,7 +16,7 @@
 constexpr int WIDTH = 32;
 constexpr int HEIGHT = 24;
 
-constexpr int MAX_N_ROUNDS = 66;
+//constexpr int MAX_N_ROUNDS = 66;
 
 enum class Occupant
 {

@@ -3,6 +3,9 @@
 #include <array>
 #include <vector>
 #include <cstdlib> //rand()
+#include <random>
+#include <iostream>
+#include <algorithm>
 
 using uint = unsigned int;
 
@@ -19,6 +22,15 @@ enum class Occupant
 };
 
 struct Position {
+
+  bool operator==( Position const & o ) const {
+    return x == o.x && y == o.y;
+  }
+
+  bool operator!=( Position const & o ) const {
+    return ! ( *this == o );
+  }
+
   uint x;
   uint y;
 };
@@ -75,7 +87,7 @@ class Board {
       empty_positions.reserve( (HEIGHT*WIDTH) - 1 );
       for( uint w = 0; w < WIDTH; ++w ){
 	for( uint h = 0; h < HEIGHT; ++h ){
-	  Position const p = {{ w, h }};
+	  Position const p = { w, h };
 	  if( p != STARTING_POSITION ){
 	    empty_positions.emplace_back( p );
 	  }

@@ -9,13 +9,13 @@
 #include <iostream>
 #include <algorithm>
 
-using uint = unsigned int;
-using luint = long unsigned int;
+//using uint = unsigned int;
+//using luint = long unsigned int;
 
-constexpr uint WIDTH = 32;
-constexpr uint HEIGHT = 24;
+constexpr int WIDTH = 32;
+constexpr int HEIGHT = 24;
 
-constexpr uint MAX_N_ROUNDS = 66;
+constexpr int MAX_N_ROUNDS = 66;
 
 enum class Occupant
 {
@@ -46,20 +46,22 @@ struct Position {
     return ! ( *this == o );
   }
 
-  uint x;
-  uint y;
+  int x;
+  int y;
+
 };
+
 constexpr Position STARTING_POSITION({ WIDTH / 2, HEIGHT / 2 });
 
-uint nrobots_per_round( uint round ){
+int nrobots_per_round( int round ){
   return round * 10; //TODO
 }
 
-uint random_x(){
+int random_x(){
   return rand() % WIDTH;
 }
 
-uint random_y(){
+int random_y(){
   return rand() % HEIGHT;
 }
 
@@ -76,7 +78,7 @@ class Board {
     }
   }
 
-  void init( uint const round ){
+  void init( int const round ){
     //RESET
     clear_board();
 
@@ -100,8 +102,8 @@ class Board {
       //This can be very constexpr
       std::vector< Position > empty_positions;
       empty_positions.reserve( (HEIGHT*WIDTH) - 1 );
-      for( uint w = 0; w < WIDTH; ++w ){
-	for( uint h = 0; h < HEIGHT; ++h ){
+      for( int w = 0; w < WIDTH; ++w ){
+	for( int h = 0; h < HEIGHT; ++h ){
 	  Position const p = { w, h };
 	  if( p != STARTING_POSITION ){
 	    empty_positions.emplace_back( p );
@@ -113,7 +115,7 @@ class Board {
       std::mt19937 g( rd() );
       std::shuffle( empty_positions.begin(), empty_positions.end(), g );
 
-      for( uint i = 0; i < robot_positions_.size(); ++i ){
+      for( int i = 0; i < robot_positions_.size(); ++i ){
 	robot_positions_[ i ] = empty_positions[ i ];
 	cell( robot_positions_[ i ] ) = Occupant::ROBOT;
       }
@@ -131,21 +133,22 @@ class Board {
   MoveResult
   move_robots_1_step(){
     //Clear robots from map
-    for( uint w = 0; w < WIDTH; ++w ){
-      for( uint h = 0; h < HEIGHT; ++h ){
+    for( int w = 0; w < WIDTH; ++w ){
+      for( int h = 0; h < HEIGHT; ++h ){
 	if( cells_[ w ][ h ] == Occupant::ROBOT ){
 	  cells_[ w ][ h ] = Occupant::EMPTY;
 	}
       }
     }
 
-    std::set< uint > robots_to_delete;
+    //Some robots will be deleted if they run into each other or into fire
+    std::set< int > robots_to_delete;
  
     //keep temporary track of robots just in case they clash
     //elements are indices in robot_positions_
-    std::array< std::array< uint , WIDTH >, HEIGHT > robot_indices;
+    std::array< std::array< int , WIDTH >, HEIGHT > robot_indices;
 
-    for( uint r = 0; r < robot_positions_.size(); ++r ){
+    for( int r = 0; r < robot_positions_.size(); ++r ){
       Position & pos = robot_positions_[ r ];
 
       if( human_position_.x < pos.x ) pos.x -= 1;
@@ -161,7 +164,7 @@ class Board {
 	break;
       case Occupant::ROBOT:
 	{
-	  uint const other_robot_ind = robot_indices[ pos.x ][ pos.y ];
+	  int const other_robot_ind = robot_indices[ pos.x ][ pos.y ];
 	  robots_to_delete.insert( other_robot_ind );
 	}
 	robots_to_delete.insert( r );
@@ -174,7 +177,7 @@ class Board {
 	robots_to_delete.insert( r );
 	break;
       }
-    }// for uint r
+    }// for int r
 
     for( auto iter = robots_to_delete.rbegin(), end = robots_to_delete.rend();
 	 iter != end; ++iter ){
@@ -184,6 +187,13 @@ class Board {
     return MoveResult::CONTINUE;
   } //move_robots_one_step
 
+  int n_robots() const {
+    return robot_positions_.size();
+  }
+
+  void move_human( int dx, int dy ) {
+    
+  }
 
 private:
   std::array< std::array< Occupant, WIDTH >, HEIGHT > cells_;
@@ -194,10 +204,29 @@ private:
 
 };
 
+/*
 class RobotsGame {
 
-  uint round_ = 1;
-  luint score_ = 0;    
+  int
+  cascade(){
+    int const n_robots_start = board_.n_robots();
+
+    MoveResult result = MoveResult::CONTINUE;
+    while( result == MoveResult::CONTINUE ){
+      board_.move_robots_1_step();
+      //TODO cache state for visualization?
+      //Maybe this should be moved to the python layer
+    }
+
+    //TODO just do this in python
+  }
+
+private:
+  Board board_;
+
+  int round_ = 1;
+  int n_safe_teleports_remaining_ = 0;
 };
+*/
 
 //int main(){};

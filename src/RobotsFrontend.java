@@ -114,11 +114,11 @@ public class RobotsFrontend {
 	Scanner input = new Scanner(System.in);
 	while( input.hasNext() ){
 	    String next = input.nextLine();
-	    if( next == "EXIT" ) break;
-	    else if( next.startsWith("UPDATE") ){
+	    if( next == "EXIT" ){
+		System.out.println( "EXIT" );
+	    } else if( next.startsWith("UPDATE") ){
 		mv.updateboard( next.split(" ")[1] );
-	    }
-	    else {
+	    } else {
 		System.out.println( next );
 	    }
 	}

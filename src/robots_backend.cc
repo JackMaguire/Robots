@@ -108,7 +108,7 @@ int main(){
       int const command = int( c );
       // std::cout << command << std::endl;
       Key const key = parse_int( command );
-      bool gameover = false;
+      GameOverBool gameover = false;
       switch( key ){
 	// Zooming:
       case Key::Q:
@@ -142,7 +142,7 @@ int main(){
 	//TODO
 	break;
       case Key::SPACE:
-	//TODO
+	gameover = game.cascade();
 	break;
       default:
 	break;

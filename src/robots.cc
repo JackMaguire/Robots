@@ -11,6 +11,11 @@
 #include <algorithm>
 #include <sstream>
 
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
+
+using GameOverBool = bool;
+
 //using uint = unsigned int;
 //using luint = long unsigned int;
 
@@ -188,6 +193,10 @@ public:
       robot_positions_.erase( robot_positions_.begin() + (*iter) );
     }
 
+    if( robot_positions_.size() == 0 ){
+      return MoveResult::YOU_WIN_ROUND;
+    }
+
     return MoveResult::CONTINUE;
   } //move_robots_one_step
 
@@ -248,31 +257,42 @@ public:
       //TODO handle win
     } else {
       board_.init( ++round_ );
+      std::this_thread::sleep_for (std::chrono::seconds(1));
       Visualizer::show( board_ );    
     }
   }
 
-  int
-  cascade( Visualizer && v ){
+  //true if game over
+  GameOverBool
+  cascade(){
     // int const n_robots_start = board_.n_robots();
 
     MoveResult result = MoveResult::CONTINUE;
     while( result == MoveResult::CONTINUE ){
-      board_.move_robots_1_step();
+      result = board_.move_robots_1_step();
       Visualizer::show( board_ );
+      std::this_thread::sleep_for (std::chrono::milliseconds(500));
     }
 
     if( result == MoveResult::YOU_WIN_ROUND ){
       new_round();
     }
+
+    return result == MoveResult::YOU_LOSE;
   }
 
   //true if game over
-  bool
+  GameOverBool
   move_human( int const dx, int const dy ){
     MoveResult const result = board_.move_human( dx, dy );
     Visualizer::show( board_ );
+
     std::cout << "result: " << int( result ) << std::endl;
+
+    if( result == MoveResult::YOU_WIN_ROUND ){
+      new_round();
+    }
+
     return result == MoveResult::YOU_LOSE;
   }
 

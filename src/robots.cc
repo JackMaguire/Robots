@@ -16,6 +16,8 @@
 
 using GameOverBool = bool;
 
+#define HUMAN_SPEED
+
 //using uint = unsigned int;
 //using luint = long unsigned int;
 
@@ -314,11 +316,23 @@ public:
   void
   new_round(){
     std::cout << "You have " << n_safe_teleports_remaining_ << " safe teleports remaining" << std::endl;
+    std::cout << "Score: " << score_ << std::endl;
+
+    long int expected_score = 0;
+    for( int r = 1; r <= round_; ++r ){
+      expected_score += r * 10;
+    }
+    if( score_ != expected_score ){
+      std::cout << "Expected score is " << expected_score << std::endl;
+    }
+
     if( round_ == MAX_N_ROUNDS ){
       //TODO handle win
     } else {
       board_.init( ++round_ );
+#ifdef HUMAN_SPEED
       std::this_thread::sleep_for (std::chrono::seconds(1));
+#endif
       Visualizer::show( board_ );    
     }
   }
@@ -332,7 +346,9 @@ public:
     while( result == MoveResult::CONTINUE ){
       result = board_.move_robots_1_step();
       Visualizer::show( board_ );
+#ifdef HUMAN_SPEED
       std::this_thread::sleep_for (std::chrono::milliseconds(500));
+#endif
     }
 
     if( result == MoveResult::YOU_WIN_ROUND ){
@@ -341,14 +357,21 @@ public:
       new_round();
     }
 
+    score_ += n_robots_start;
+
+    std::cout << "result: " << int( result ) << std::endl;
     return result == MoveResult::YOU_LOSE;
   }
 
   //true if game over
   GameOverBool
   move_human( int const dx, int const dy ){
+    int const n_robots_start = board_.n_robots();
+
     MoveResult const result = board_.move_human( dx, dy );
     Visualizer::show( board_ );
+
+    score_ += ( n_robots_start - board_.n_robots() );
 
     std::cout << "result: " << int( result ) << std::endl;
 
@@ -361,14 +384,19 @@ public:
 
   GameOverBool
   teleport(){
+    int const n_robots_start = board_.n_robots();
     if( n_safe_teleports_remaining_ == 0 ){
       MoveResult const result = board_.teleport( false );
+      std::cout << "result: " << int( result ) << std::endl;
       board_.teleport( false );
+      score_ += ( n_robots_start - board_.n_robots() );
       Visualizer::show( board_ );
       return result == MoveResult::YOU_LOSE;;
     } else {
       MoveResult const result = board_.teleport( true );
+      std::cout << "result: " << int( result ) << std::endl;
       Visualizer::show( board_ );
+      score_ += ( n_robots_start - board_.n_robots() );
       --n_safe_teleports_remaining_;
       return result == MoveResult::YOU_LOSE;//this should never happen
     }
@@ -379,6 +407,8 @@ private:
 
   int round_ = 1;
   int n_safe_teleports_remaining_ = 0;
+
+  long int score_ = 0;
 };
 
 

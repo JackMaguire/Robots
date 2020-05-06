@@ -121,9 +121,10 @@ public class RobotsFrontend {
 	while( input.hasNext() ){
 	    String next = input.nextLine();
 	    if( next == "EXIT" ){
-		System.out.println( "EXIT" );
+		System.out.println( "EXIT!" );
 		System.out.println( "UPDATE " + second_to_last );
 		System.out.println( "UPDATE " + mv.get_board() );
+		System.exit( 0 );
 	    } else if( next.startsWith("UPDATE") ){
 		second_to_last = mv.get_board();
 		mv.updateboard( next.split(" ")[1] );

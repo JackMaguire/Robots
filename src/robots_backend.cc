@@ -1,4 +1,5 @@
 // g++ robots_backend.cc -std=c++2a -o robots_backend -Wall -pedantic -Wshadow
+// g++ robots_backend.cc -std=c++2a -o robots_backend -Wall -pedantic -Wshadow -g -D_GLIBCXX_DEBUG
 
 #include "robots.cc"
 

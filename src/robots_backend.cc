@@ -106,7 +106,7 @@ int main(){
       char c;
       read( fileno( stdin ), &c, 1 );
       int const command = int( c );
-      std::cout << command << std::endl;
+      // std::cout << command << std::endl;
       Key const key = parse_int( command );
 
       switch( key ){

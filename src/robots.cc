@@ -197,8 +197,10 @@ public:
 
   MoveResult
   move_human( int const dx, int const dy ) {
+    cell( human_position_ ) = Occupant::EMPTY;
     human_position_.x += dx;
     human_position_.y += dy;
+    cell( human_position_ ) = Occupant::HUMAN;
     return move_robots_1_step();
   }
 

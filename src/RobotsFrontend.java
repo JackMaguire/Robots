@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JPanel;
+import java.util.Scanner;
 
 public class RobotsFrontend {
 
@@ -23,6 +24,12 @@ public class RobotsFrontend {
 
 	private final Color background_color_ = new Color( 220, 220, 220 );
 	private final Color background_color2_ = new Color( 200, 200, 200 );
+
+	private final Color robot_color_ = new Color( 10, 10, 100 );
+	private final Color human_color_ = new Color( 10, 100, 10 );
+	private final Color  fire_color_ = new Color( 200, 10, 10 );
+
+	String board = null;
 
 	public void drawBackground( Graphics2D g2D ) {
 	    g2D.setColor( background_color_ );
@@ -42,11 +49,55 @@ public class RobotsFrontend {
 		}
 		skip = !skip;
 	    }
+
+	    if( board != null ){
+		int i = 0;
+		int j = 0;
+		if( board.length() != BOARD_HEIGHT * BOARD_WIDTH ){
+		    System.out.println( board.length() );
+		    System.out.println( BOARD_HEIGHT * BOARD_WIDTH );
+		    System.exit( 1 );
+		}
+		for( int a = 0; a < board.length(); ++a ){
+		    char c = board.charAt( a );
+		    boolean draw = true;
+		    switch( c ){
+		    case( '1' )://ROBOT
+			g2D.setColor( robot_color_ );
+			break;
+		    case( '2' )://HUMAN
+			g2D.setColor( human_color_ );
+			break;
+		    case( '3' )://FIRE
+			g2D.setColor( fire_color_ );
+			break;
+		    default:
+			draw = false;
+		    }
+		    if( draw ){
+			final int x = i * BOX_SIZE;
+			final int y = j * BOX_SIZE;
+			g2D.fillOval( x, y, BOX_SIZE, BOX_SIZE );
+		    }
+
+		    ++j;
+		    if( j == BOARD_HEIGHT ){
+			j = 0;
+			++i;
+		    }
+		}
+	    }
 	}
 
 	public void paint( Graphics g ) {
 	    Graphics2D g2D = (Graphics2D) g;
 	    drawBackground( g2D );
+	}
+
+	public void updateboard( String newboard ){
+	    board = newboard;
+	    repaint();
+	    revalidate();
 	}
     }
 
@@ -56,8 +107,14 @@ public class RobotsFrontend {
 	//F.setPreferredSize(new Dimension( BOARD_WIDTH * BOX_SIZE, BOARD_HEIGHT * BOX_SIZE));
 	F.setExtendedState( JFrame.MAXIMIZED_BOTH );
 	// F.setUndecorated( true );
-	F.add( new MainView() );
+	MainView mv = new MainView();
+	F.add( mv );
 	F.setVisible( true );
+
+	Scanner input = new Scanner(System.in);
+	while( input.hasNext() ){
+	    mv.updateboard( input.nextLine() );
+	}
     }
 
 }

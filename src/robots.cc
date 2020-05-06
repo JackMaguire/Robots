@@ -9,14 +9,15 @@
 #include <random>
 #include <iostream>
 #include <algorithm>
+#include <sstream>
 
 //using uint = unsigned int;
 //using luint = long unsigned int;
 
-constexpr int WIDTH = 32;
-constexpr int HEIGHT = 24;
+constexpr int WIDTH = 45;
+constexpr int HEIGHT = 30;
 
-//constexpr int MAX_N_ROUNDS = 66;
+constexpr int MAX_N_ROUNDS = 66;
 
 enum class Occupant
 {
@@ -52,10 +53,11 @@ struct Position {
 
 };
 
-constexpr Position STARTING_POSITION({ WIDTH / 2, HEIGHT / 2 });
+//constexpr Position STARTING_POSITION({ WIDTH / 2, HEIGHT / 2 });
+constexpr Position STARTING_POSITION({ 23, 15 });
 
 int nrobots_per_round( int round ){
-  return round * 10; //TODO
+  return round * 10;
 }
 
 int random_x(){
@@ -67,12 +69,13 @@ int random_y(){
 }
 
 class Board {
+public:
   Board(){
     init( 1 );
   }
 
   void clear_board(){
-    for( std::array< Occupant, WIDTH > & arr : cells_ ){
+    for( std::array< Occupant, HEIGHT > & arr : cells_ ){
       for( Occupant & o : arr ){
 	o = Occupant::EMPTY;
       }
@@ -192,12 +195,26 @@ class Board {
     return robot_positions_.size();
   }
 
-  void move_human( int dx, int dy ) {
-    
+  MoveResult
+  move_human( int const dx, int const dy ) {
+    human_position_.x += dx;
+    human_position_.y += dy;
+    return move_robots_1_step();
+  }
+
+  std::string
+  get_stringified_representation() const {
+    std::stringstream ss;
+    for( std::array< Occupant, HEIGHT > const & arr : cells_ ){
+      for( Occupant const & o : arr ){
+	ss << int( o );
+      }
+    }
+    return ss.str();
   }
 
 private:
-  std::array< std::array< Occupant, WIDTH >, HEIGHT > cells_;
+  std::array< std::array< Occupant, HEIGHT >, WIDTH > cells_;
   //TODO hold pointers to robots?
 
   Position human_position_;
@@ -205,21 +222,45 @@ private:
 
 };
 
-/*
+
+template< typename Visualizer >
 class RobotsGame {
+public:
+  RobotsGame(){
+    Visualizer::show( board_ );
+  }
+
+  void
+  new_round(){
+    if( round_ == MAX_N_ROUNDS ){
+      //TODO handle win
+    } else {
+      board_.init( ++round_ );
+      Visualizer::show( board_ );    
+    }
+  }
 
   int
-  cascade(){
-    int const n_robots_start = board_.n_robots();
+  cascade( Visualizer && v ){
+    // int const n_robots_start = board_.n_robots();
 
     MoveResult result = MoveResult::CONTINUE;
     while( result == MoveResult::CONTINUE ){
       board_.move_robots_1_step();
-      //TODO cache state for visualization?
-      //Maybe this should be moved to the python layer
+      Visualizer::show( board_ );
     }
 
-    //TODO just do this in python
+    if( result == MoveResult::YOU_WIN_ROUND ){
+      new_round();
+    }
+  }
+
+  //true if game over
+  bool
+  move_human( int const dx, int const dy ){
+    MoveResult const result = board_.move_human( dx, dy );
+    Visualizer::show( board_ );
+    return result == MoveResult::YOU_LOSE;
   }
 
 private:
@@ -228,6 +269,6 @@ private:
   int round_ = 1;
   int n_safe_teleports_remaining_ = 0;
 };
-*/
+
 
 //int main(){};

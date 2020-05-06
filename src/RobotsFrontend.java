@@ -31,6 +31,10 @@ public class RobotsFrontend {
 
 	String board = null;
 
+	public String get_board() {
+	    return board;
+	}
+
 	public void drawBackground( Graphics2D g2D ) {
 	    g2D.setColor( background_color_ );
 	    g2D.fillRect( 0, 0, getWidth(), getHeight() );
@@ -111,12 +115,17 @@ public class RobotsFrontend {
 	F.add( mv );
 	F.setVisible( true );
 
+	String second_to_last = "";
+
 	Scanner input = new Scanner(System.in);
 	while( input.hasNext() ){
 	    String next = input.nextLine();
 	    if( next == "EXIT" ){
 		System.out.println( "EXIT" );
+		System.out.println( "UPDATE " + second_to_last );
+		System.out.println( "UPDATE " + mv.get_board() );
 	    } else if( next.startsWith("UPDATE") ){
+		second_to_last = mv.get_board();
 		mv.updateboard( next.split(" ")[1] );
 	    } else {
 		System.out.println( next );

@@ -139,7 +139,7 @@ int main(){
 	gameover = game.move_human( 1, -1 );
 	break;
       case Key::T:
-	//TODO
+	gameover = game.teleport();
 	break;
       case Key::SPACE:
 	gameover = game.cascade();

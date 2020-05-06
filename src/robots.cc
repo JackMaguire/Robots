@@ -58,6 +58,8 @@ struct Position {
 
 };
 
+namespace {
+
 //constexpr Position STARTING_POSITION({ WIDTH / 2, HEIGHT / 2 });
 constexpr Position STARTING_POSITION({ 23, 15 });
 
@@ -85,6 +87,64 @@ public:
 	o = Occupant::EMPTY;
       }
     }
+  }
+
+  Position
+  find_open_space(){
+    if( robot_positions_.size() < 100 ){
+      Position openp;
+      do {
+	openp.x = random_x();
+	openp.y = random_y();
+      } while( cell( openp ) != Occupant::EMPTY );
+      return openp;
+    } else {
+      //This can be very constexpr
+      std::vector< Position > empty_positions;
+      empty_positions.reserve( (HEIGHT*WIDTH) - 1 - robot_positions_.size() );
+      for( int w = 0; w < WIDTH; ++w ){
+	for( int h = 0; h < HEIGHT; ++h ){
+	  Position const p = { w, h };
+	  if( cell_is_safe_for_teleport( p ) ){
+	    empty_positions.emplace_back( p );
+	  }
+	}
+      }
+
+      std::random_device rd;
+      std::mt19937 g( rd() );
+      std::shuffle( empty_positions.begin(), empty_positions.end(), g );
+      return empty_positions[ 0 ];
+      //Just pick random index?
+    }
+  }
+
+  bool
+  cell_is_safe_for_teleport( Position const p ){
+    for( int x = p.x - 1; x <= p.x + 1; ++x ){
+      if( x < 0 || x >= WIDTH) continue;
+      for( int y = p.y - 1; y <= p.y + 1; ++y ){
+	if( y < 0 || y >= HEIGHT) continue;
+	if( cell( Position({ x, y }) ) == Occupant::ROBOT ) return false;
+      }
+    }
+
+    return cell( p ) == Occupant::EMPTY;
+  }
+
+  MoveResult
+  teleport( bool safe ){
+    cell( human_position_ ) = Occupant::EMPTY;
+
+    if( safe ){
+      human_position_ = find_open_space();
+    } else {
+      human_position_.x = random_x();
+      human_position_.y = random_y();
+    }
+
+    cell( human_position_ ) = Occupant::HUMAN;
+    return move_robots_1_step();
   }
 
   void init( int const round ){
@@ -242,7 +302,7 @@ private:
   std::vector< Position > robot_positions_;
 
 };
-
+}
 
 template< typename Visualizer >
 class RobotsGame {
@@ -253,6 +313,7 @@ public:
 
   void
   new_round(){
+    std::cout << "You have " << n_safe_teleports_remaining_ << " safe teleports remaining" << std::endl;
     if( round_ == MAX_N_ROUNDS ){
       //TODO handle win
     } else {
@@ -265,7 +326,7 @@ public:
   //true if game over
   GameOverBool
   cascade(){
-    // int const n_robots_start = board_.n_robots();
+    int const n_robots_start = board_.n_robots();
 
     MoveResult result = MoveResult::CONTINUE;
     while( result == MoveResult::CONTINUE ){
@@ -275,6 +336,8 @@ public:
     }
 
     if( result == MoveResult::YOU_WIN_ROUND ){
+      n_safe_teleports_remaining_ += n_robots_start;
+      if( n_safe_teleports_remaining_ > 10 ) n_safe_teleports_remaining_ = 10;
       new_round();
     }
 
@@ -294,6 +357,21 @@ public:
     }
 
     return result == MoveResult::YOU_LOSE;
+  }
+
+  GameOverBool
+  teleport(){
+    if( n_safe_teleports_remaining_ == 0 ){
+      MoveResult const result = board_.teleport( false );
+      board_.teleport( false );
+      Visualizer::show( board_ );
+      return result == MoveResult::YOU_LOSE;;
+    } else {
+      MoveResult const result = board_.teleport( true );
+      Visualizer::show( board_ );
+      --n_safe_teleports_remaining_;
+      return result == MoveResult::YOU_LOSE;//this should never happen
+    }
   }
 
 private:

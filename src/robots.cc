@@ -29,10 +29,10 @@ enum class Occupant
 
 enum class MoveResult
 {
- CONTINUE,
- YOU_LOSE,
- YOU_WIN_ROUND,
- YOU_WIN_GAME
+ CONTINUE = 0,
+ YOU_LOSE = 1,
+ YOU_WIN_ROUND = 2,
+ YOU_WIN_GAME = 3
 };
 
 
@@ -150,7 +150,7 @@ public:
  
     //keep temporary track of robots just in case they clash
     //elements are indices in robot_positions_
-    std::array< std::array< int , WIDTH >, HEIGHT > robot_indices;
+    std::array< std::array< int, HEIGHT >, WIDTH > robot_indices;
 
     for( int r = 0; r < robot_positions_.size(); ++r ){
       Position & pos = robot_positions_[ r ];
@@ -198,9 +198,20 @@ public:
   MoveResult
   move_human( int const dx, int const dy ) {
     cell( human_position_ ) = Occupant::EMPTY;
+
     human_position_.x += dx;
+    if( human_position_.x < 0 ) human_position_.x = 0;
+    if( human_position_.x >= WIDTH ) human_position_.x -= 1;
+
     human_position_.y += dy;
+    if( human_position_.y < 0 ) human_position_.y = 0;
+    if( human_position_.y >= HEIGHT ) human_position_.y -= 1;
+
+    if( cell( human_position_ ) == Occupant::FIRE ) return MoveResult::YOU_LOSE;
+    if( cell( human_position_ ) == Occupant::ROBOT ) return MoveResult::YOU_LOSE;
+
     cell( human_position_ ) = Occupant::HUMAN;
+
     return move_robots_1_step();
   }
 
@@ -217,7 +228,6 @@ public:
 
 private:
   std::array< std::array< Occupant, HEIGHT >, WIDTH > cells_;
-  //TODO hold pointers to robots?
 
   Position human_position_;
   std::vector< Position > robot_positions_;
@@ -262,6 +272,7 @@ public:
   move_human( int const dx, int const dy ){
     MoveResult const result = board_.move_human( dx, dy );
     Visualizer::show( board_ );
+    std::cout << "result: " << int( result ) << std::endl;
     return result == MoveResult::YOU_LOSE;
   }
 

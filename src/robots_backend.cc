@@ -52,7 +52,7 @@ Key {
 
 struct ConsolePiper {
   static void show( Board const & b ){
-    std::cout << b.get_stringified_representation() << std::endl;
+    std::cout << "UPDATE " << b.get_stringified_representation() << std::endl;
   }
 };
 
@@ -108,35 +108,35 @@ int main(){
       int const command = int( c );
       // std::cout << command << std::endl;
       Key const key = parse_int( command );
-
+      bool gameover = false;
       switch( key ){
 	// Zooming:
       case Key::Q:
-	game.move_human( -1, 1 );
+	gameover = game.move_human( -1, 1 );
 	break;
       case Key::W:
-	game.move_human( 0, 1 );
+	gameover = game.move_human( 0, 1 );
 	break;
       case Key::E:
-	game.move_human( 1, 1 );
+	gameover = game.move_human( 1, 1 );
 	break;
       case Key::A:
-	game.move_human( -1, 0 );
+	gameover = game.move_human( -1, 0 );
 	break;
       case Key::S:
-	game.move_human( 0, 0 );
+	gameover = game.move_human( 0, 0 );
 	break;
       case Key::D:
-	game.move_human( 1, 0 );
+	gameover = game.move_human( 1, 0 );
 	break;
       case Key::Z:
-	game.move_human( -1, -1 );
+	gameover = game.move_human( -1, -1 );
 	break;
       case Key::X:
-	game.move_human( 0, -1 );
+	gameover = game.move_human( 0, -1 );
 	break;
       case Key::C:
-	game.move_human( 1, -1 );
+	gameover = game.move_human( 1, -1 );
 	break;
       case Key::T:
 	//TODO
@@ -148,10 +148,11 @@ int main(){
 	break;
       }
 
-      if( key == Key::DELETE ){
+      if( gameover || key == Key::DELETE ){
 	break;
       }
     }
   }
 
+  std::cout << "EXIT" << std::endl;
 }

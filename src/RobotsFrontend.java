@@ -42,7 +42,7 @@ public class RobotsFrontend {
 		    if( skip ) continue;
 
 		    final int x = i * BOX_SIZE;
-		    final int y = j * BOX_SIZE;
+		    final int y = (BOARD_HEIGHT-j - 1) * BOX_SIZE;
 		    g2D.fillRect( x, y, BOX_SIZE, BOX_SIZE );
 		    //System.out.println( x );
 		    //System.out.println( y );
@@ -76,7 +76,7 @@ public class RobotsFrontend {
 		    }
 		    if( draw ){
 			final int x = i * BOX_SIZE;
-			final int y = j * BOX_SIZE;
+			final int y = (BOARD_HEIGHT-j - 1) * BOX_SIZE;
 			g2D.fillOval( x, y, BOX_SIZE, BOX_SIZE );
 		    }
 
@@ -113,7 +113,14 @@ public class RobotsFrontend {
 
 	Scanner input = new Scanner(System.in);
 	while( input.hasNext() ){
-	    mv.updateboard( input.nextLine() );
+	    String next = input.nextLine();
+	    if( next == "EXIT" ) break;
+	    else if( next.startsWith("UPDATE") ){
+		mv.updateboard( next.split(" ")[1] );
+	    }
+	    else {
+		System.out.println( next );
+	    }
 	}
     }
 

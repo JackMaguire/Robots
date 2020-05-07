@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #include <termios.h>
 
-#define OUTPUT_TRAINING_DATA_DIR "training_data"
+#define OUTPUT_TRAINING_DATA_DIR "training_data/"
 
 constexpr int Q_key = 113;  //
 constexpr int W_key = 119; //capitol is 87
@@ -61,6 +61,16 @@ struct ConsolePiper {
 
 #ifdef OUTPUT_TRAINING_DATA_DIR
 struct Logger {
+
+  ~Logger(){
+    //Dump to file
+    std::string const filename =
+      OUTPUT_TRAINING_DATA_DIR + std::to_string( rand() );
+      std::ofstream myfile;
+      myfile.open ( filename );
+      myfile << output.str();
+      myfile.close();
+  }
 
   template< typename GAME >
   void
@@ -108,6 +118,10 @@ int main(){
 
   RobotsGame< ConsolePiper > game;
 
+#ifdef OUTPUT_TRAINING_DATA_DIR
+      Logger logger;
+#endif
+
   //listen for keys
   while( true ){
     fd_set set;
@@ -126,6 +140,11 @@ int main(){
       int const command = int( c );
       // std::cout << command << std::endl;
       Key const key = parse_int( command );
+
+#ifdef OUTPUT_TRAINING_DATA_DIR
+      logger.log( game, key );
+#endif
+
       GameOverBool gameover = false;
       switch( key ){
 	// Zooming:

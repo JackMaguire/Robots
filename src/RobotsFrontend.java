@@ -120,7 +120,7 @@ public class RobotsFrontend {
 	Scanner input = new Scanner(System.in);
 	while( input.hasNext() ){
 	    String next = input.nextLine();
-	    if( next == "EXIT" ){
+	    if( next.startsWith("EXIT") ){
 		System.out.println( "EXIT!" );
 		System.out.println( "UPDATE " + second_to_last );
 		System.out.println( "UPDATE " + mv.get_board() );

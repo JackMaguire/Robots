@@ -92,7 +92,7 @@ public:
   }
 
   Position
-  find_open_space(){
+  find_open_space( bool const allow_robot_movement = true ){
     if( robot_positions_.size() < 100 ){
       Position openp;
       do {
@@ -107,9 +107,25 @@ public:
       for( int w = 0; w < WIDTH; ++w ){
 	for( int h = 0; h < HEIGHT; ++h ){
 	  Position const p = { w, h };
-	  if( cell_is_safe_for_teleport( p ) ){
-	    empty_positions.emplace_back( p );
+	  if( allow_robot_movement ){
+	    if( cell_is_safe_for_teleport( p ) ){
+	      empty_positions.emplace_back( p );
+	    }
+	  } else {
+	    if( cell( p ) == Occupant::EMPTY ){
+	      empty_positions.emplace_back( p );
+	    }
 	  }
+	}
+      }
+
+      if( empty_positions.empty() ){
+	if( allow_robot_movement ){
+	  std::cout << "No Safe Positions! Trying Fallback Plan" << std::endl;
+	  return find_open_space( false );
+	} else {
+	  std::cout << "No safe positions even in fallback plan!!" << std::endl;
+	  //This is very unexpected, don't know how to handle it
 	}
       }
 
@@ -117,7 +133,7 @@ public:
       std::mt19937 g( rd() );
       std::shuffle( empty_positions.begin(), empty_positions.end(), g );
       return empty_positions[ 0 ];
-      //Just pick random index?
+      //TODO Just pick random index instead of shuffling
     }
   }
 
@@ -127,7 +143,7 @@ public:
       if( x < 0 || x >= WIDTH) continue;
       for( int y = p.y - 1; y <= p.y + 1; ++y ){
 	if( y < 0 || y >= HEIGHT) continue;
-	if( cell( Position({ x, y }) ) == Occupant::ROBOT ) return false;
+	if( cell( Position({ x, y }) ) != Occupant::EMPTY ) return false;
       }
     }
 
@@ -135,7 +151,7 @@ public:
   }
 
   MoveResult
-  teleport( bool safe ){
+  teleport( bool const safe ){
     cell( human_position_ ) = Occupant::EMPTY;
 
     if( safe ){
@@ -146,7 +162,7 @@ public:
     }
 
     cell( human_position_ ) = Occupant::HUMAN;
-    return move_robots_1_step();
+    return move_robots_1_step( safe );
   }
 
   void init( int const round ){
@@ -202,7 +218,9 @@ public:
   }
 
   MoveResult
-  move_robots_1_step(){
+  move_robots_1_step(
+    bool const human_is_safe = false
+  ){
     //Clear robots from map
     for( int w = 0; w < WIDTH; ++w ){
       for( int h = 0; h < HEIGHT; ++h ){
@@ -227,6 +245,12 @@ public:
 
       if( human_position_.y < pos.y ) pos.y -= 1;
       else if( human_position_.y > pos.y ) pos.y += 1;
+
+      if( human_is_safe && pos == human_position_ ){
+	//This is rare, but just have the robot take one step to the left or right
+	if( pos.x == 0 ) ++pos.x;//Don't go out of bounds
+	else --pos.x;
+      }
 
       switch( cell( pos ) ){
       case Occupant::EMPTY:
@@ -352,12 +376,11 @@ public:
     }
 
     if( result == MoveResult::YOU_WIN_ROUND ){
+      score_ += n_robots_start;
       n_safe_teleports_remaining_ += n_robots_start;
       if( n_safe_teleports_remaining_ > 10 ) n_safe_teleports_remaining_ = 10;
       new_round();
     }
-
-    score_ += n_robots_start;
 
     std::cout << "result: " << int( result ) << std::endl;
     return result == MoveResult::YOU_LOSE;
@@ -398,6 +421,9 @@ public:
       Visualizer::show( board_ );
       score_ += ( n_robots_start - board_.n_robots() );
       --n_safe_teleports_remaining_;
+      if( result == MoveResult::YOU_LOSE ){
+	std::cout << "That loss should not have counted!" << std::endl;
+      }
       return result == MoveResult::YOU_LOSE;//this should never happen
     }
   }

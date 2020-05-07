@@ -16,7 +16,7 @@
 
 using GameOverBool = bool;
 
-#define HUMAN_SPEED
+#define GO_HUMAN_SPEED true
 
 //using uint = unsigned int;
 //using luint = long unsigned int;
@@ -80,6 +80,7 @@ int random_y(){
 class Board {
 public:
   Board(){
+    srand(time(NULL));
     init( 1 );
   }
 
@@ -354,14 +355,14 @@ public:
       //TODO handle win
     } else {
       board_.init( ++round_ );
-#ifdef HUMAN_SPEED
-      std::this_thread::sleep_for (std::chrono::seconds(1));
-#endif
+      if( GO_HUMAN_SPEED ){
+	std::this_thread::sleep_for (std::chrono::seconds(1));
+      }
       Visualizer::show( board_ );    
     }
   }
 
-  //true if game over
+  template< bool go_slow = GO_HUMAN_SPEED >
   GameOverBool
   cascade(){
     int const n_robots_start = board_.n_robots();
@@ -370,9 +371,9 @@ public:
     while( result == MoveResult::CONTINUE ){
       result = board_.move_robots_1_step();
       Visualizer::show( board_ );
-#ifdef HUMAN_SPEED
-      std::this_thread::sleep_for (std::chrono::milliseconds(500));
-#endif
+      if( go_slow ){
+	std::this_thread::sleep_for (std::chrono::milliseconds(500));
+      }
     }
 
     if( result == MoveResult::YOU_WIN_ROUND ){
@@ -414,6 +415,7 @@ public:
       board_.teleport( false );
       score_ += ( n_robots_start - board_.n_robots() );
       Visualizer::show( board_ );
+      std::cout << "You have 0 safe teleports remaining" << std::endl;
       return result == MoveResult::YOU_LOSE;;
     } else {
       MoveResult const result = board_.teleport( true );
@@ -424,8 +426,21 @@ public:
       if( result == MoveResult::YOU_LOSE ){
 	std::cout << "That loss should not have counted!" << std::endl;
       }
+      std::cout << "You have " << n_safe_teleports_remaining_ << " safe teleports remaining" << std::endl;
       return result == MoveResult::YOU_LOSE;//this should never happen
     }
+  }
+
+  Board const & board() const {
+    return board_;
+  }
+
+  int n_safe_teleports_remaining() const {
+    return n_safe_teleports_remaining_;
+  }
+
+  int round() const {
+    return round_;
   }
 
 private:

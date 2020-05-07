@@ -17,6 +17,8 @@
 #include <fcntl.h>
 #include <termios.h>
 
+#define OUTPUT_TRAINING_DATA_DIR "training_data"
+
 constexpr int Q_key = 113;  //
 constexpr int W_key = 119; //capitol is 87
 constexpr int E_key = 101; //
@@ -57,6 +59,22 @@ struct ConsolePiper {
   }
 };
 
+#ifdef OUTPUT_TRAINING_DATA_DIR
+struct Logger {
+
+  template< typename GAME >
+  void
+  log( GAME const & game, Key const key ){
+    output << game.board().get_stringified_representation()
+    << ',' << game.n_safe_teleports_remaining()
+    << ',' << game.round()
+    << ',' << int( key ) << std::endl;
+  }
+
+  std::stringstream output;
+};  
+#endif
+
 Key
 parse_int( int const command ){
   switch( command ){
@@ -78,7 +96,6 @@ parse_int( int const command ){
   };
   return Key::NONE;
 }
-
 
 int main(){
 

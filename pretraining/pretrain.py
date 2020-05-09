@@ -33,10 +33,11 @@ view_distance = 4
 n_board_states = 5 # OOB, empty, human, fire, robot (TODO reorder to match enum)
 in1_dim = 1 + (2*view_distance)
 input1 = Input(shape=(in1_dim,in1_dim,n_board_states,), name="in1", dtype="float32" )
-boardconv1 = Conv2D( filters=5, kernel_size=(3,3), padding='valid', data_format='channels_last', activation='relu' )( input1 )
-print( boardconv1.shape )
-while( boardconv1.shape[ 0 ] < 3 ):
-    boardconv1 = Conv2D( filters=5, kernel_size=(3,3), padding='valid', data_format='channels_last', activation='relu' )( boardconv1 )
+boardconv1 = Conv2D( filters=15, kernel_size=(3,3), padding='valid', data_format='channels_last', activation='relu' )( input1 )
+print( boardconv1.shape ) #(None, 7, 7, N)
+print( boardconv1.shape[ 1 ] )
+while( boardconv1.shape[ 1 ] > 3 ):
+    boardconv1 = Conv2D( filters=10, kernel_size=(3,3), padding='valid', data_format='channels_last', activation='relu' )( boardconv1 )
     print( boardconv1.shape )
 
 #Move Input
@@ -54,10 +55,10 @@ layer = tensorflow.keras.layers.concatenate( [boardconv1,input2], name="merge", 
 
 
 #in-place 1x1 conv
-layer = Conv2D( filters=15, kernel_size=(1,1), padding='valid', data_format='channels_last', activation='relu' )( layer )
+layer = Conv2D( filters=20, kernel_size=(1,1), padding='valid', data_format='channels_last', activation='relu' )( layer )
 
 #(2,2,N)
-layer = Conv2D( filters=15, kernel_size=(2,2), padding='valid', data_format='channels_last', activation='relu' )( layer )
+layer = LocallyConnected2D( filters=15, kernel_size=(2,2), padding='valid', data_format='channels_last', activation='relu' )( layer )
 print( layer.shape )
 
 layer = Flatten( data_format='channels_last' )( layer )

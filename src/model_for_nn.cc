@@ -143,7 +143,7 @@ struct LocalInput {
 	//Channel 5: n robots in region
 	int nbots_region = 0;
 	if( dx != 0 && dy != 0 ){
-	  for( Position const robot : board.robots ){
+	  for( Position const robot : board.robots() ){
 	    bool valid_for_dx = true;
 	    switch( dx ){
 	    case( -1 ):

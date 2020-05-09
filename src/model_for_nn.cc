@@ -108,7 +108,7 @@ struct LocalInput {
 	Board clone = board;
 
 	//Channel 1 : Is it safe to move here?
-	move_result = clone.move_human( dx, dy );
+	MoveResult const move_result = clone.move_human( dx, dy );
 	bool const safe_to_move = ( move_result != MoveResult::YOU_LOSE );
 
 	//Channel 2: If it is safe, how many robots die?

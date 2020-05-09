@@ -192,6 +192,89 @@ struct LocalInput {
   }
 };
 
+struct KeyPress {
+  enum class
+  Key {
+       NONE,
+       Q,
+       W,
+       E,
+       A,
+       S,
+       D,
+       Z,
+       X,
+       C,
+       T,
+       SPACE,
+       DELETE
+  };
+
+  Key press_;
+
+  KeyPress( int const press )
+  {
+    press_ = Key( press );
+  }
+
+  void rotate_to_the_right(){
+    switch( press_ ){
+    case( Key::Q ):
+      press_ = Key::E;
+      break;
+    case( Key::W ):
+      press_ = Key::D;
+      break;
+    case( Key::E ):
+      press_ = Key::C;
+      break;
+    case( Key::D ):
+      press_ = Key::X;
+      break;
+    case( Key::C ):
+      press_ = Key::Z;
+      break;
+    case( Key::X ):
+      press_ = Key::A;
+      break;
+    case( Key::Z ):
+      press_ = Key::Q;
+      break;
+    case( Key::A ):
+      press_ = Key::W;
+      break;
+    default:
+      break;
+    }
+  }
+
+  void mirror_horizontally(){
+    switch( press_ ){
+    case( Key::Q ):
+      press_ = Key::E;
+      break;
+    case( Key::E ):
+      press_ = Key::Q;
+      break;
+    case( Key::A ):
+      press_ = Key::D;
+      break;
+    case( Key::D ):
+      press_ = Key::A;
+      break;
+    case( Key::Z ):
+      press_ = Key::C;
+      break;
+    case( Key::C ):
+      press_ = Key::Z;
+      break;
+    default:
+      break;
+    }
+  }
+
+};
+
 using Game = RobotsGame< DummyVisualizer, false >;
 
 boost::python::tuple

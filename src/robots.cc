@@ -322,6 +322,33 @@ public:
     return ss.str();
   }
 
+  void
+  load_from_stringified_representation( std::string const & str ) {
+    robot_positions_.clear();
+
+    int index = 0;
+    Position pos({0,0});
+    for( pos.x = 0; pos.x < WIDTH; ++pos.x ){
+      for( pos.y = 0; pos.y < HEIGHT; ++pos.y ){
+	char const val = str[ index ]; ++index;
+	Occupant const state = Occupant(int(val));
+	cell( pos ) = state;
+
+	switch( state ){
+	case( Occupant::ROBOT ):
+	  robot_positions_.push_back( pos );
+	  break;
+	case( Occupant::HUMAN ):
+	  human_position_ = pos;
+	  break;
+	case( Occupant::EMPTY ):
+	case( Occupant::FIRE ):
+	  break;
+	}
+      }//y
+    }//x
+  }
+
 private:
   std::array< std::array< Occupant, HEIGHT >, WIDTH > cells_;
 

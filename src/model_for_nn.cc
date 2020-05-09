@@ -37,6 +37,57 @@ split_by_comma( std::string const & instring ){
 
 }//anonymous namespace
 
+template< int SIZE >
+struct BoardInput{
+  static_assert( SIZE % 2 == 1, "Must be an odd size" );
+
+  using NSTATES = 5;
+  using Type = std::array< std::array< std::array< float, NSTATES >, SIZE >, SIZE >;
+  Type data_;
+
+  static
+  std::array< float, NSTATES >
+  onehot_encoding_for_OOB(){
+    std::array< float, NSTATES > array;
+    array.fill( 0 );
+    //Set last value to 1
+    array[ NSTATES - 1 ] = 1.0;
+    return array;
+  }
+
+  static
+  std::array< float, NSTATES >
+  onehot_encode( Occupant o ){
+    std::array< float, NSTATES > array;
+    array.fill( 0 );
+    //All enums in this project are 0-indexed
+    array[ int(o) ] = 1.0;
+    return array;    
+  }
+
+  BoardInput() = default;
+  BoardInput( BoardInput const & ) = default;
+  BoardInput( BoardInput && ) = default;
+
+  BoardInput( Board const & board ){
+    Position const hpos = board.human_position();
+
+    Position pos;
+    constexpr int OFFSET = SIZE / 2;
+    for( int i = 0; i < SIZE; ++i ){
+      pos.x = hpos.x + i - OFFSET;
+      for( int j = 0; j < SIZE; ++j ){
+	pos.y = hpos.y + j - OFFSET;
+	if( Board::position_is_in_bounds( pos ) ){
+	  data_[ i ][ j ] = onehot_encode( board.cell( pos ) );
+	} else {
+	  data_[ i ][ j ] = onehot_encoding_for_OOB();
+	}
+      } 
+    }
+  }
+};
+
 using Game = RobotsGame< DummyVisualizer, false >;
 
 boost::python::tuple

@@ -58,6 +58,20 @@ struct Position {
   int x;
   int y;
 
+  Position operator+( Position const & o ) const {
+    Position p;
+    p.x = x + o.x;
+    p.y = y + o.y;
+    return p;
+  }
+
+  Position operator-( Position const & o ) const {
+    Position p;
+    p.x = x - o.x;
+    p.y = y - o.y;
+    return p;
+  }
+
 };
 
 namespace {
@@ -347,6 +361,14 @@ public:
 	}
       }//y
     }//x
+  }
+
+  Position const & human_position() const {
+    return human_position_;
+  }
+
+  static bool position_is_in_bounds( Position p ){
+    return p.x >= 0 && p.x < WIDTH && p.y >= 0 && p.y < HEIGHT;
   }
 
 private:

@@ -88,6 +88,34 @@ struct BoardInput{
   }
 };
 
+struct LocalInput {
+  using Type = std::array< std::array< std::array< float, 5 >, 3 >, 3 >;
+  Type data_;
+
+  LocalInput() = default;
+  LocalInput( LocalInput const & ) = default;
+  LocalInput( LocalInput && ) = default;
+
+  LocalInput( Board const & board ){
+    Position const hpos = board.human_position();
+
+    Position pos;
+    for( int const dx : { -1, 0, 1 } ){
+      pos.x = hpos.x + dx;
+      for( int const dy : { -1, 0, 1 } ){
+	pos.y = hpos.y + dy;
+	int const i = dx + 1;
+	int const j = dy + 1;
+
+	Board clone = board;
+	//Channel 1 : Is it safe to move here?
+	
+      }
+    }
+    
+  }
+};
+
 using Game = RobotsGame< DummyVisualizer, false >;
 
 boost::python::tuple

@@ -472,11 +472,11 @@ public:
 
   void
   load_from_stringified_representation(
-				       std::string const & str,
-				       int const round,
-				       int const n_safe_teleports_remaining,
-				       long int const score
-				       ) {
+    std::string const & str,
+    int const round,
+    int const n_safe_teleports_remaining,
+    long int const score
+  ) {
     board_.load_from_stringified_representation( str );
     round_ = round;
     n_safe_teleports_remaining_ = n_safe_teleports_remaining;

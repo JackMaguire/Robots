@@ -3,6 +3,10 @@
 #include <boost/python.hpp>
 //#include <boost/python/numpy.hpp>
 
+#include <string>
+#include <sstream>
+#include <vector>
+
 using namespace boost;
 using namespace boost::python;
 //using namespace boost::python::numpy;
@@ -15,7 +19,26 @@ namespace {
   public:
     static void show( Board const & ){}
   };
+
+  std::vector< std::string >
+  split_by_comma( std::string const & instring ){
+    std::stringstream ss( instring );
+    std::vector< std::string > result;
+
+    while( ss.good() ) {
+      std::string substr;
+      getline( ss, substr, ',' );
+      result.push_back( substr );
+    }
+    return result;
+  }
 }
+
+//boost::python::tuple
+//parst_string( std::string const & string ){
+  //Format:
+  //BOARD,NTELEPORT,ROUND,KEY
+//}
 
 BOOST_PYTHON_MODULE( model_for_nn )
 {

@@ -41,7 +41,7 @@ template< int SIZE >
 struct BoardInput{
   static_assert( SIZE % 2 == 1, "Must be an odd size" );
 
-  using NSTATES = 5;
+  static constexpr int NSTATES = 5;
   using Type = std::array< std::array< std::array< float, NSTATES >, SIZE >, SIZE >;
   Type data_;
 

@@ -7,7 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
-
+#include <math.h>
 
 using namespace boost;
 using namespace boost::python;
@@ -104,12 +104,88 @@ struct LocalInput {
       pos.x = hpos.x + dx;
       for( int const dy : { -1, 0, 1 } ){
 	pos.y = hpos.y + dy;
+
+	Board clone = board;
+
+	//Channel 1 : Is it safe to move here?
+	move_result = clone.move_human( dx, dy );
+	bool const safe_to_move = ( move_result != MoveResult::YOU_LOSE );
+
+	//Channel 2: If it is safe, how many robots die?
+	int const n_dead_robots = ( safe_to_move ? board.n_robots() - clone.n_robots() : 0 );
+
+	//Channel 3: If it is safe, can you cascade from there?
+	bool safe_to_cascade;
+	if( move_result == MoveResult::CONTINUE ){
+	  MoveResult cascade_result = MoveResult::CONTINUE;
+	  while( cascade_result == MoveResult::CONTINUE ){
+	    cascade_result = clone.move_robots_1_step();
+	  }
+	  safe_to_cascade = ( cascade_result != MoveResult::YOU_LOSE );
+	} else {
+	  //lose, win round, win game
+	  safe_to_cascade = safe_to_move;
+	}
+
+	//Channel 4: n_robots in line of sight
+	int nbots_los = 0;
+	if( dx != 0 && dy != 0 ){
+	  Position p = hpos;
+	  p.x += dx;
+	  p.y += dy;
+	  while( Board::position_is_in_bounds( p ) ){
+	    if( board.cell( p ) == Occupant::ROBOT ){
+	      ++nbots_los;
+	    }
+	  }
+	}
+
+	//Channel 5: n robots in region
+	int nbots_region = 0;
+	if( dx != 0 && dy != 0 ){
+	  for( Position const robot : board.robots ){
+	    bool valid_for_dx = true;
+	    switch( dx ){
+	    case( -1 ):
+	      valid_for_dx = robot.x < hpos.x;
+	      break;
+	    case( 0 ):
+	      valid_for_dx = robot.x == hpos.x;
+	      break;
+	    case( 1 ):
+	      valid_for_dx = robot.x > hpos.x;
+	      break;
+	    }
+	    if( ! valid_for_dx ) continue;
+
+	    bool valid_for_dy = true;
+	    switch( dy ){
+	    case( -1 ):
+	      valid_for_dy = robot.y < hpos.y;
+	      break;
+	    case( 0 ):
+	      valid_for_dy = robot.y == hpos.y;
+	      break;
+	    case( 1 ):
+	      valid_for_dy = robot.y > hpos.y;
+	      break;
+	    }
+
+	    if( valid_for_dx && valid_for_dy ){
+	      ++nbots_region;
+	    }
+	  }
+	}
+
+	//Normalizing!
 	int const i = dx + 1;
 	int const j = dy + 1;
 
-	Board clone = board;
-	//Channel 1 : Is it safe to move here?
-	
+	data_[ i ][ j ][ 0 ] = ( safe_to_move ? 1.0 : 0.0 );
+	data_[ i ][ j ][ 1 ] = ( n_dead_robots == 0 ? -2 : log(n_dead_robots) - 1 ); //ln
+	data_[ i ][ j ][ 2 ] = ( safe_to_cascade ? 1.0 : 0.0 );
+	data_[ i ][ j ][ 3 ] = ( nbots_los == 0 ? -2 : log10(nbots_los) - 1 ); //log10
+	data_[ i ][ j ][ 4 ] = ( nbots_region == 0 ? -2 : log10(nbots_region) - 1 ); //log10
       }
     }
     

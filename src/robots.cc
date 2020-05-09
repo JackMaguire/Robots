@@ -371,6 +371,10 @@ public:
     return p.x >= 0 && p.x < WIDTH && p.y >= 0 && p.y < HEIGHT;
   }
 
+  std::vector< Position > const & robots() const {
+    return robot_positions_;
+  }
+
 private:
   std::array< std::array< Occupant, HEIGHT >, WIDTH > cells_;
 

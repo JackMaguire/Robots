@@ -37,6 +37,60 @@ split_by_comma( std::string const & instring ){
 
 }//anonymous namespace
 
+template< int SIZE, typename T >
+std::array< std::array< T, SIZE >, SIZE >
+rotate_right( std::array< std::array< T, SIZE >, SIZE > const & src ){
+  std::array< std::array< T, SIZE >, SIZE > rotated;
+
+  //Outer index is X
+  //Inner index is Y
+
+  //Table
+  /*
+    OLD X    NEW Y
+    -1       1
+    0        0
+    1        -1
+    2        -2
+
+    OLD Y    NEW X
+    -1       -1
+    0        0
+    1        1
+    2        2
+   */
+
+  static_assert( SIZE % 2 == 1, "Must be an odd size" );  
+  constexpr int OFFSET = SIZE / 2;
+
+  auto && dx_to_i =
+    []( int const dx ){
+      return dx + offset;
+    };
+
+  auto && i_to_dx =
+    []( int const i ){
+      return i - OFFSET;
+    };
+
+  for( int i = 0; i < SIZE; ++i ){
+    for( int j = 0; j < SIZE; ++j ){
+      int const dx = i_to_dx( i );
+      int const dy = i_to_dx( j );
+
+      int const newdx = dy;
+      int const newdy = dx * -1;
+
+      int const newi = dx_to_i( newdx );
+      int const newj = dx_to_i( newdy );
+
+      rotated[ newi ][ newj ] = src[ i ][ j ];
+    }
+  }
+
+  return rotated;
+}
+
 template< int SIZE >
 struct BoardInput{
   static_assert( SIZE % 2 == 1, "Must be an odd size" );

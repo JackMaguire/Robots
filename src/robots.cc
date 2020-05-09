@@ -358,7 +358,7 @@ private:
 };
 }
 
-template< typename Visualizer >
+template< typename Visualizer, bool go_slow = GO_HUMAN_SPEED >
 class RobotsGame {
 public:
   RobotsGame(){
@@ -389,7 +389,6 @@ public:
     }
   }
 
-  template< bool go_slow = GO_HUMAN_SPEED >
   GameOverBool
   cascade(){
     int const n_robots_start = board_.n_robots();

@@ -37,7 +37,7 @@ split_by_comma( std::string const & instring ){
 
 }//anonymous namespace
 
-using Game = RobotsGame< DummyVisualizer >;
+using Game = RobotsGame< DummyVisualizer, false >;
 
 boost::python::tuple
 parse_string( std::string const & str ){
@@ -71,7 +71,7 @@ BOOST_PYTHON_MODULE( model_for_nn )
     .def("load_from_stringified_representation", &Board::load_from_stringified_representation );
 
   class_<Game>("Game")
-    .def( "cascade_fast", &Game::cascade< false > )
+    .def( "fast_cascade", &Game::cascade )
     .def( "move_human", &Game::move_human )
     .def( "teleport", &Game::teleport )
     .def( "n_safe_teleports_remaining", &Game::n_safe_teleports_remaining )

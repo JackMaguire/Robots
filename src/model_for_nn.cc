@@ -65,7 +65,7 @@ rotate_right( std::array< std::array< T, SIZE >, SIZE > const & src ){
 
   auto && dx_to_i =
     []( int const dx ){
-      return dx + offset;
+      return dx + OFFSET;
     };
 
   auto && i_to_dx =

@@ -18,9 +18,7 @@ Links:
 
 I am chronicling my adventure throughout this process in the links below.
 
-### Chapter 0: Description of the Game
-
-TODO
+[Chapter 0: Description of the Game](https://jackmaguire.github.io/Robots/Chapter0)
 
 ### Chapter 1: Making the Game
 

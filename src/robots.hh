@@ -1,6 +1,8 @@
 // g++ robots.cc -std=c++2a -c -o robots.so
 // g++ robots.cc -std=c++2a -c -o robots.so -Wall -pedantic -Wshadow
 
+#pragma once
+
 #include <array>
 #include <vector>
 #include <set>

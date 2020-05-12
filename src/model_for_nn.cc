@@ -65,7 +65,7 @@ parse_string( std::string const & str ){
   constexpr int board_input_size = 9;
   BoardInput< board_input_size > board_input( game.board() );
   p::tuple const board_input_shape =
-    p::make_tuple( board_input_size, board_input_size, BoardInput::NSTATES );
+    p::make_tuple( board_input_size, board_input_size, BoardInput< board_input_size >::NSTATES );
   np::ndarray const board_input_py = np::empty( board_input_shape, dtype );
   {
     float * ndarray_data = reinterpret_cast< float * > ( board_input_py.get_data() );
@@ -89,7 +89,7 @@ parse_string( std::string const & str ){
     memcpy( ndarray_data, data.data(), sizeof( std::array< float, 11 > ) );
   }
 
-  return boost::python::make_tuple( board_input_py, local_input_py, output );
+  return boost::python::make_tuple( board_input_py, local_input_py, output_py );
 }
 
 BOOST_PYTHON_MODULE( model_for_nn )

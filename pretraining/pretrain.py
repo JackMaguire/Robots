@@ -73,7 +73,7 @@ output = Dense( name="output", units=n_output, activation='softmax' )( layer )
 model = Model(inputs=[input1, input2], outputs=output )
 
 metrics_to_output=[ 'accuracy' ]
-model.compile( loss='binary_crossentropy', optimizer='adam', metrics=metrics_to_output )
+model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=metrics_to_output )
 model.summary()
 
 in1 = []

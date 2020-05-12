@@ -69,14 +69,14 @@ parse_string(
   KeyPress key( std::stoi( tokens[ 3 ] ) );
   
   if( do_mirror ){
-    board_input = mirror( board_input );
-    local_input = mirror( local_input );
+    board_input = mirror< board_input_size >( board_input );
+    local_input = mirror< 3 >( local_input );
     key.mirror_horizontally();
   }
 
   for( int i = 0; i < n_rotates; ++i ){
-    board_input = rotate_right( board_input );
-    local_input = rotate_right( local_input );
+    board_input = rotate_right< board_input_size >( board_input );
+    local_input = rotate_right< 3 >( local_input );
     key.rotate_to_the_right();
   }
 

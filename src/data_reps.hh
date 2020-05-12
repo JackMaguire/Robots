@@ -7,6 +7,18 @@
 #include <math.h>
 
 template< int SIZE, typename T >
+std::array< T, SIZE >
+mirror( std::array< T, SIZE > const & src ){
+  std::array< T, SIZE > mirrored;
+
+  for( int i = 0; i < SIZE; ++i ){
+      mirrored[ (SIZE - 1) - i ] = src[ i ];
+  }
+
+  return mirrored;
+}
+
+template< int SIZE, typename T >
 std::array< std::array< T, SIZE >, SIZE >
 rotate_right( std::array< std::array< T, SIZE >, SIZE > const & src ){
   std::array< std::array< T, SIZE >, SIZE > rotated;
@@ -281,6 +293,27 @@ struct KeyPress {
   KeyPress( int const press )
   {
     press_ = Key( press );
+  }
+
+  std::array< float, 11 >
+  get_one_hot() const {
+    std::array< float, 11 > data;
+    data.fill( 0 );
+    switch( press_ ){
+      case( Key::Q ): data[ 0 ] = 1.0; break;
+      case( Key::W ): data[ 1 ] = 1.0; break;
+      case( Key::E ): data[ 2 ] = 1.0; break;
+      case( Key::A ): data[ 3 ] = 1.0; break;
+      case( Key::S ): data[ 4 ] = 1.0; break;
+      case( Key::D ): data[ 5 ] = 1.0; break;
+      case( Key::Z ): data[ 6 ] = 1.0; break;
+      case( Key::X ): data[ 7 ] = 1.0; break;
+      case( Key::C ): data[ 8 ] = 1.0; break;
+      case( Key::T ): data[ 9 ] = 1.0; break;
+      case( Key::SPACE ) data[ 10 ] = 1.0; break;
+      default: break;
+    }
+    return data;
   }
 
   void rotate_to_the_right(){

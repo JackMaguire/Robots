@@ -2,20 +2,21 @@
 #include "data_reps.hh"
 
 #include <boost/python.hpp>
-//#include <boost/python/numpy.hpp>
+#include <boost/python/numpy.hpp>
 
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <array?
 
 using namespace boost;
 using namespace boost::python;
-//using namespace boost::python::numpy;
+using namespace boost::python::numpy;
 
 namespace p = boost::python;
-//namespace np = boost::python::numpy;
+namespace np = boost::python::numpy;
 
 namespace {
 class DummyVisualizer {
@@ -58,7 +59,37 @@ parse_string( std::string const & str ){
     0 //score = 0, I guess
   );
 
-  return boost::python::make_tuple( int( -1 ) );
+  np::dtype const dtype = np::dtype::get_builtin<float>();
+
+ 
+  constexpr int board_input_size = 9;
+  BoardInput< board_input_size > board_input( game.board() );
+  p::tuple const board_input_shape =
+    p::make_tuple( board_input_size, board_input_size, BoardInput::NSTATES );
+  np::ndarray const board_input_py = np::empty( board_input_shape, dtype );
+  {
+    float * ndarray_data = reinterpret_cast< float * > ( board_input_py.get_data() );
+    memcpy( ndarray_data, board_input.data_.data(), sizeof( BoardInput< board_input_size >::Type ) );
+  }
+
+  LocalInput local_input( game.board() );
+  p::tuple const local_input_shape = p::make_tuple( 3, 3, 5 );
+  np::ndarray const local_input_py = np::empty( local_input_shape, dtype );
+  {
+    float * ndarray_data = reinterpret_cast< float * > ( local_input_py.get_data() );
+    memcpy( ndarray_data, local_input.data_.data(), sizeof( LocalInput::Type ) );
+  }
+
+  KeyPress key( std::stoi( tokens[ 3 ] ) );
+  p::tuple const key_shape = p::make_tuple( 11 );
+  np::ndarray const output_py = np::empty( key_shape, dtype );
+  {
+    std::array< float, 11 > const data = key.get_one_hot();
+    float * ndarray_data = reinterpret_cast< float * > ( output_py.get_data() );
+    memcpy( ndarray_data, data.data(), sizeof( std::array< float, 11 > ) );
+  }
+
+  return boost::python::make_tuple( board_input_py, local_input_py, output );
 }
 
 BOOST_PYTHON_MODULE( model_for_nn )

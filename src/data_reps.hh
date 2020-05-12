@@ -6,6 +6,8 @@
 #include <vector>
 #include <math.h>
 
+#pragma once
+
 template< int SIZE, typename T >
 std::array< T, SIZE >
 mirror( std::array< T, SIZE > const & src ){
@@ -185,16 +187,6 @@ bool count_for_c5(
 
   //unreachable
   return false;
-}
-
-int get_channel_5(
-  int const dx,
-  int const dy,
-  Board const & board
-){
-  Position const hpos = board.human_position();
-  int nrobots = 0;
-  return nrobots;
 }
 
 struct LocalInput {

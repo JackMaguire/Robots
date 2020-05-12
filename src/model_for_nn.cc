@@ -98,7 +98,9 @@ BOOST_PYTHON_MODULE( model_for_nn )
 {
   using namespace boost::python;
   Py_Initialize();
-  //np::initialize();
+  np::initialize();
+
+  def( "parse_string", parse_string );
 
   class_<Board>("Board")
     .def("get_stringified_representation", &Board::get_stringified_representation )

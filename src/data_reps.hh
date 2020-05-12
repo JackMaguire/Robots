@@ -125,6 +125,7 @@ struct BoardInput{
     }
   }
 };
+using DefaultBoardInput = BoardInput< 9 >;
 
 bool count_for_c5(
   int const dx,

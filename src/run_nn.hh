@@ -2,6 +2,7 @@
 #include "tensorflow/c/c_api.h" //https://www.tensorflow.org/install/lang_c
 
 #include "data_reps.hh"
+#include "robots.hh"
 
 #include <assert.h>
 #include <iostream>
@@ -174,4 +175,15 @@ run_tf(
   memcpy( output_row.data(), values, sizeof( std::array< float, 11 > ) );
 
   return output_row;
+}
+
+template< typename T >
+void
+predict_ai( RobotsGame<T> const & game ){
+  DefaultBoardInput const board( game.board() );
+  LocalInput const local( game.board() );
+  std::array< float, 11 > const & results = run_tf( board, local );
+  for( int i = 0; i < 11; ++i ){
+    std::cout << i << " " << results[ i ] << std::endl;
+  }
 }

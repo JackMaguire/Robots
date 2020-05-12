@@ -33,7 +33,7 @@ constexpr int C_key = 99;
 constexpr int T_key = 116;
 constexpr int SPACEBAR = 32;
 
-//constexpr int R_key = 114; //
+constexpr int R_key = 114; //
 
 constexpr int delete_key = 127; //
 
@@ -51,7 +51,8 @@ Key {
      C,
      T,
      SPACE,
-     DELETE
+     DELETE,
+     R
 };
 
 struct ConsolePiper {
@@ -102,7 +103,7 @@ parse_int( int const command ){
   case T_key: return Key::T;
   case SPACEBAR: return Key::SPACE;
   case delete_key: return Key::DELETE;
-
+  case R_key: return Key::R;
   default: return Key::NONE;
   };
   return Key::NONE;
@@ -181,6 +182,10 @@ int main(){
 	break;
       case Key::SPACE:
 	gameover = game.cascade();
+	break;
+      case Key::R:
+	std::cout << "R" << std::endl;
+	predict_ai( game );
 	break;
       default:
 	break;

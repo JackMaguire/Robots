@@ -2,7 +2,7 @@ import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-
+from model_for_nn import *
 #import tensorflow as tf
 
 #from tensorflow.keras.models import Sequential
@@ -26,6 +26,7 @@ numpy.random.seed( 0 )
 
 parser = argparse.ArgumentParser()
 parser.add_argument( "--model", help="filename for output file", default="model.h5", required=False )
+parser.add_argument( "--data", help="filename for data file", required=True )
 args = parser.parse_args()
 
 #Board Input
@@ -76,3 +77,14 @@ model.compile( loss='binary_crossentropy', optimizer='adam', metrics=metrics_to_
 model.save( args.model )
 model.summary()
 
+in1 = []
+in2 = []
+out = []
+
+with open( args.data ) as f:
+    for line in f:
+        line2 = line.strip()
+        print( line2 )
+        thingy = parse_string( line2 )
+        print( thingy )
+        exit( 0 )

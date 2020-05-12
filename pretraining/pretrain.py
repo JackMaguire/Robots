@@ -15,14 +15,14 @@ from tensorflow.keras.models import Model
 import tensorflow.keras.backend as K
 import tensorflow.keras.callbacks
 import tensorflow.keras
-import numpy
+import numpy as np
 
 import sys
 #import h5py
 
 import argparse
 
-numpy.random.seed( 0 )
+np.random.seed( 0 )
 
 parser = argparse.ArgumentParser()
 parser.add_argument( "--model", help="filename for output file", default="model.h5", required=False )
@@ -74,7 +74,6 @@ model = Model(inputs=[input1, input2], outputs=output )
 
 metrics_to_output=[ 'accuracy' ]
 model.compile( loss='binary_crossentropy', optimizer='adam', metrics=metrics_to_output )
-model.save( args.model )
 model.summary()
 
 in1 = []
@@ -84,7 +83,26 @@ out = []
 with open( args.data ) as f:
     for line in f:
         line2 = line.strip()
-        print( line2 )
         thingy = parse_string( line2 )
-        print( thingy )
-        exit( 0 )
+        in1.append( thingy[ 0 ] )
+        in2.append( thingy[ 1 ] )
+        out.append( thingy[ 2 ] )
+
+in1arr = np.asarray( in1 )
+in2arr = np.asarray( in2 )
+outarr = np.asarray( out )
+
+print( in1arr.shape )
+print( in2arr.shape )
+print( outarr.shape )
+#exit( 0 )
+
+csv_logger = tensorflow.keras.callbacks.CSVLogger( "training_log.csv", separator=',', append=False )
+stop = tensorflow.keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=0, mode='min', baseline=None, restore_best_weights=True)
+lrer = tensorflow.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, verbose=0, mode='auto', min_delta=0.001, cooldown=0, min_lr=0)
+
+callbacks=[csv_logger,stop,lrer]
+
+        
+model.fit( x=[in1arr,in2arr], y=outarr, batch_size=64, epochs=300, verbose=1, callbacks=callbacks, shuffle=True, validation_split=0.25 )
+model.save( args.model )

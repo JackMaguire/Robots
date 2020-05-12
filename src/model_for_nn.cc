@@ -89,6 +89,8 @@ parse_string( std::string const & str ){
     memcpy( ndarray_data, data.data(), sizeof( std::array< float, 11 > ) );
   }
 
+  //TODO data augmentation
+
   return boost::python::make_tuple( board_input_py, local_input_py, output_py );
 }
 

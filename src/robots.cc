@@ -436,7 +436,7 @@ public:
     }
 
     std::cout << "result: " << int( result ) << std::endl;
-    return result == MoveResult::YOU_LOSE;
+    return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN;
   }
 
   //true if game over
@@ -455,7 +455,7 @@ public:
       new_round();
     }
 
-    return result == MoveResult::YOU_LOSE;
+    return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN;
   }
 
   GameOverBool
@@ -468,7 +468,7 @@ public:
       score_ += ( n_robots_start - board_.n_robots() );
       Visualizer::show( board_ );
       std::cout << "You have 0 safe teleports remaining" << std::endl;
-      return result == MoveResult::YOU_LOSE;;
+      return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN;
     } else {
       MoveResult const result = board_.teleport( true );
       std::cout << "result: " << int( result ) << std::endl;
@@ -479,7 +479,7 @@ public:
 	std::cout << "That loss should not have counted!" << std::endl;
       }
       std::cout << "You have " << n_safe_teleports_remaining_ << " safe teleports remaining" << std::endl;
-      return result == MoveResult::YOU_LOSE;//this should never happen
+      return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN;//losing should never happen
     }
   }
 

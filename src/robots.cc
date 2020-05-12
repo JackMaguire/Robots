@@ -464,7 +464,7 @@ public:
     if( n_safe_teleports_remaining_ == 0 ){
       MoveResult const result = board_.teleport( false );
       std::cout << "result: " << int( result ) << std::endl;
-      board_.teleport( false );
+
       score_ += ( n_robots_start - board_.n_robots() );
       Visualizer::show( board_ );
       std::cout << "You have 0 safe teleports remaining" << std::endl;

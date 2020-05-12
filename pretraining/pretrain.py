@@ -55,7 +55,7 @@ layer = tensorflow.keras.layers.concatenate( [boardconv1,input2], name="merge", 
 
 
 #in-place 1x1 conv
-layer = Conv2D( filters=20, kernel_size=(1,1), padding='valid', data_format='channels_last', activation='relu' )( layer )
+layer = LocallyConnected2D( filters=20, kernel_size=(1,1), padding='valid', data_format='channels_last', activation='relu' )( layer )
 
 #(2,2,N)
 layer = LocallyConnected2D( filters=15, kernel_size=(2,2), padding='valid', data_format='channels_last', activation='relu' )( layer )
@@ -73,5 +73,6 @@ model = Model(inputs=[input1, input2], outputs=output )
 
 metrics_to_output=[ 'accuracy' ]
 model.compile( loss='binary_crossentropy', optimizer='adam', metrics=metrics_to_output )
-model.save( args.model + ".h5" )
+model.save( args.model )
 model.summary()
+

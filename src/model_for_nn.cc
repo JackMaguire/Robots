@@ -9,7 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-#include <array?
+#include <array>
 
 using namespace boost;
 using namespace boost::python;

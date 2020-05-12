@@ -111,6 +111,80 @@ struct BoardInput{
   }
 };
 
+bool count_for_c5(
+  int const dx,
+  int const dy,
+  Position const hpos,
+  Position const rpos
+){
+  switch( dx ){
+
+  case( -1 ):
+    switch( dy ){
+    case( -1 ):
+      //7 oclock
+      return (rpos.x < hpos.x) && (rpos.y < hpos.y) &&
+	( hpos.y - rpos.y > hpos.x - rpos.x );
+    case( 0 ):
+      //8 oclock
+      return (rpos.x < hpos.x) && (rpos.y < hpos.y) &&
+	( hpos.y - rpos.y < hpos.x - rpos.x );
+    case( 1 ):
+      //10 oclock
+      return (rpos.x < hpos.x) && (rpos.y > hpos.y) &&
+	( rpos.y - hpos.y < hpos.x - rpos.x );
+    }
+    break;
+
+  case( 0 ):
+    switch( dy ){
+    case( -1 ):
+      //5 oclock
+      return (rpos.x > hpos.x) && (rpos.y < hpos.y) &&
+	( hpos.y - rpos.y > rpos.x - hpos.x );
+    case( 0 ):
+      //n robots total
+      return true;
+    case( 1 ):
+      //11 oclock
+      return (rpos.x < hpos.x) && (rpos.y > hpos.y) &&
+	( rpos.y - hpos.y > hpos.x - rpos.x );
+    }
+    break;
+
+  case( 1 ):
+    switch( dy ){
+    case( -1 ):
+      //4 oclock
+      return (rpos.x > hpos.x) && (rpos.y < hpos.y) &&
+	( hpos.y - rpos.y < rpos.x - hpos.x );
+    case( 0 ):
+      //2 oclock
+      return (rpos.x > hpos.x) && (rpos.y > hpos.y) &&
+	( rpos.y - hpos.y < rpos.x - hpos.x );
+    case( 1 ):
+      //1 oclock
+      return (rpos.x > hpos.x) && (rpos.y > hpos.y) &&
+	( rpos.y - hpos.y > rpos.x - hpos.x );
+    }
+    break;
+
+  }//switch dx
+
+  //unreachable
+  return false;
+}
+
+int get_channel_5(
+  int const dx,
+  int const dy,
+  Board const & board
+){
+  Position const hpos = board.human_position();
+  int nrobots = 0;
+  return nrobots;
+}
+
 struct LocalInput {
   using Type = std::array< std::array< std::array< float, 5 >, 3 >, 3 >;
   Type data_;
@@ -165,39 +239,8 @@ struct LocalInput {
 
 	//Channel 5: n robots in region
 	int nbots_region = 0;
-	if( dx != 0 && dy != 0 ){
-	  for( Position const robot : board.robots() ){
-	    bool valid_for_dx = true;
-	    switch( dx ){
-	    case( -1 ):
-	      valid_for_dx = robot.x < hpos.x;
-	      break;
-	    case( 0 ):
-	      valid_for_dx = robot.x == hpos.x;
-	      break;
-	    case( 1 ):
-	      valid_for_dx = robot.x > hpos.x;
-	      break;
-	    }
-	    if( ! valid_for_dx ) continue;
-
-	    bool valid_for_dy = true;
-	    switch( dy ){
-	    case( -1 ):
-	      valid_for_dy = robot.y < hpos.y;
-	      break;
-	    case( 0 ):
-	      valid_for_dy = robot.y == hpos.y;
-	      break;
-	    case( 1 ):
-	      valid_for_dy = robot.y > hpos.y;
-	      break;
-	    }
-
-	    if( valid_for_dx && valid_for_dy ){
-	      ++nbots_region;
-	    }
-	  }
+	for( Position const robot : board.robots() ){
+	  if( count_for_c5( dx, dy, hpos, robot ) ) ++nbots_region;
 	}
 
 	//Normalizing!

@@ -246,6 +246,8 @@ struct LocalInput {
 	    if( board.cell( p ) == Occupant::ROBOT ){
 	      ++nbots_los;
 	    }
+	    p.x += dx;
+	    p.y += dy;
 	  }
 	}
 

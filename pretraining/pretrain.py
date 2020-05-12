@@ -83,10 +83,15 @@ out = []
 with open( args.data ) as f:
     for line in f:
         line2 = line.strip()
-        thingy = parse_string( line2 )
-        in1.append( thingy[ 0 ] )
-        in2.append( thingy[ 1 ] )
-        out.append( thingy[ 2 ] )
+        n = 0
+        for a in [ True, False ]:
+            for b in range( 0, 4 ):
+                thingy = parse_string( line2, a, b )
+                in1.append( thingy[ 0 ] )
+                in2.append( thingy[ 1 ] )
+                out.append( thingy[ 2 ] )
+                n += 1
+        assert n == 8
 
 in1arr = np.asarray( in1 )
 in2arr = np.asarray( in2 )

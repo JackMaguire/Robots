@@ -42,7 +42,11 @@ split_by_comma( std::string const & instring ){
 using Game = RobotsGame< DummyVisualizer, false >;
 
 boost::python::tuple
-parse_string( std::string const & str ){
+parse_string(
+  std::string const & str,
+  bool const mirror,
+  int const n_rotates
+){
   //Format:
   //BOARD,NTELEPORT,ROUND,KEY
   std::vector< std::string > tokens = split_by_comma( str );
@@ -59,11 +63,25 @@ parse_string( std::string const & str ){
     0 //score = 0, I guess
   );
 
-  np::dtype const dtype = np::dtype::get_builtin<float>();
-
- 
   constexpr int board_input_size = 9;
   BoardInput< board_input_size > board_input( game.board() );
+  LocalInput local_input( game.board() );
+  KeyPress key( std::stoi( tokens[ 3 ] ) );
+  
+  if( mirror ){
+    board_input = mirror( board_input );
+    local_input = mirror( local_input );
+    key.mirror_horizontally();
+  }
+
+  for( int i = 0; i < n_rotates; ++i ){
+    board_input = rotate_right( board_input );
+    local_input = rotate_right( local_input );
+    key.rotate_to_the_right();
+  }
+
+  np::dtype const dtype = np::dtype::get_builtin<float>();
+ 
   p::tuple const board_input_shape =
     p::make_tuple( board_input_size, board_input_size, BoardInput< board_input_size >::NSTATES );
   np::ndarray const board_input_py = np::empty( board_input_shape, dtype );
@@ -72,7 +90,6 @@ parse_string( std::string const & str ){
     memcpy( ndarray_data, board_input.data_.data(), sizeof( BoardInput< board_input_size >::Type ) );
   }
 
-  LocalInput local_input( game.board() );
   p::tuple const local_input_shape = p::make_tuple( 3, 3, 5 );
   np::ndarray const local_input_py = np::empty( local_input_shape, dtype );
   {
@@ -80,7 +97,6 @@ parse_string( std::string const & str ){
     memcpy( ndarray_data, local_input.data_.data(), sizeof( LocalInput::Type ) );
   }
 
-  KeyPress key( std::stoi( tokens[ 3 ] ) );
   p::tuple const key_shape = p::make_tuple( 11 );
   np::ndarray const output_py = np::empty( key_shape, dtype );
   {

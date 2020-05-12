@@ -1,3 +1,5 @@
+#pragma once
+
 #include "robots.hh"
 
 #include <string>
@@ -5,8 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-
-#pragma once
+#include <assert.h>
 
 template< int SIZE, typename T >
 std::array< T, SIZE >
@@ -267,7 +268,7 @@ struct LocalInput {
 struct KeyPress {
   enum class
   Key {
-       NONE,
+       NONE = 0,
        Q,
        W,
        E,
@@ -308,6 +309,23 @@ struct KeyPress {
       default: break;
     }
     return data;
+  }
+
+  static
+  Key
+  interpret( std::array< float, 11 > const & data ){
+    int max_index = 0;
+    float max_val = data[ 0 ];
+    for( int i = 1; i < 11; ++i ){
+      if( data[ i ] > max_val ){
+	max_val = data[ i ];
+	max_index = i;
+      }
+    }
+
+    //off by one
+    assert( Key::Q == Key( 1 ) );
+    return Key( max_index + 1 );
   }
 
   void rotate_to_the_right(){

@@ -2,6 +2,7 @@
 // g++ robots_backend.cc -std=c++2a -o robots_backend -Wall -pedantic -Wshadow -g -D_GLIBCXX_DEBUG
 
 #include "robots.hh"
+#include "run_nn.hh"
 
 #include <array>
 
@@ -38,7 +39,7 @@ constexpr int delete_key = 127; //
 
 enum class
 Key {
-     NONE,
+     NONE = 0,
      Q,
      W,
      E,

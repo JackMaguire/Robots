@@ -44,7 +44,7 @@ using Game = RobotsGame< DummyVisualizer, false >;
 boost::python::tuple
 parse_string(
   std::string const & str,
-  bool const mirror,
+  bool const do_mirror,
   int const n_rotates
 ){
   //Format:
@@ -68,7 +68,7 @@ parse_string(
   LocalInput local_input( game.board() );
   KeyPress key( std::stoi( tokens[ 3 ] ) );
   
-  if( mirror ){
+  if( do_mirror ){
     board_input = mirror( board_input );
     local_input = mirror( local_input );
     key.mirror_horizontally();

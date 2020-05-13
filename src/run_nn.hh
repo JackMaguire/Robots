@@ -68,6 +68,16 @@ load_session(){
       nullptr,
       tf_status.get()
     ) );
+
+
+  {
+    size_t pos = 0;
+    TF_Operation* oper;
+    std::cout << "All Operations: " << std::endl;
+    while ((oper = TF_GraphNextOperation( tf_graph.get(), &pos )) != nullptr) {
+      std::cout << TF_OperationName( oper ) << std::endl;
+    }
+  }
 }
 
 
@@ -92,13 +102,15 @@ run_tf(
   LocalInput const & local_input
 ) {
 
-  std::string const name1 = "in1";
-  std::string const name2 = "in2";
-  std::string const outname = "out/Softmax";
+  std::string const name1 = "serving_default_in1";
+  std::string const name2 = "serving_default_in2";
+  std::string const outname = "StatefulPartitionedCall";//"output/Softmax";
 
   if ( tf_session == nullptr ){
     load_session();
     assert( TF_GetCode( tf_status.get() ) == TF_OK );
+    //std::array< float, 11 > r;
+    //return r;
   }
 
   const int ninputs = 2;

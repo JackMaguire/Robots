@@ -55,6 +55,11 @@ parse_string(
     return boost::python::make_tuple( int( -1 ) );
   }
 
+  KeyPress key( std::stoi( tokens[ 3 ] ) );
+  if( key.press_ == Key::NONE ){
+    return boost::python::make_tuple( int( -1 ) );
+  }  
+
   Game game;
   game.load_from_stringified_representation(
     tokens[ 0 ],
@@ -66,8 +71,7 @@ parse_string(
   constexpr int board_input_size = 9;
   BoardInput< board_input_size > board_input( game.board() );
   LocalInput local_input( game.board() );
-  KeyPress key( std::stoi( tokens[ 3 ] ) );
-  
+
   if( do_mirror ){
     board_input.data_ = mirror< board_input_size >( board_input.data_ );
     local_input.data_ = mirror< 3 >( local_input.data_ );

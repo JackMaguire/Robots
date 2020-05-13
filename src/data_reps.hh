@@ -307,7 +307,9 @@ struct KeyPress {
       case( Key::C ): data[ 8 ] = 1.0; break;
       case( Key::T ): data[ 9 ] = 1.0; break;
       case( Key::SPACE ): data[ 10 ] = 1.0; break;
-      default: break;
+      default:
+	assert( false );
+	break;
     }
     return data;
   }

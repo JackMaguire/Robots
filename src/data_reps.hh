@@ -103,7 +103,11 @@ struct BoardInput{
     return array;    
   }
 
-  BoardInput() = default;
+  BoardInput() {
+    for( int i = 0; i < SIZE; ++i )
+      for( int j = 0; j < SIZE; ++j )
+	data_[i][j].fill( 0 );
+  }
   BoardInput( BoardInput const & ) = default;
   BoardInput( BoardInput && ) = default;
 
@@ -124,6 +128,7 @@ struct BoardInput{
       } 
     }
   }
+
 };
 using DefaultBoardInput = BoardInput< 9 >;
 
@@ -195,7 +200,12 @@ struct LocalInput {
   using Type = std::array< std::array< std::array< float, 5 >, 3 >, 3 >;
   Type data_;
 
-  LocalInput() = default;
+  LocalInput(){
+    for( int i = 0; i < 3; ++i )
+      for( int j = 0; j < 3; ++j )
+	data_[i][j].fill( 0 );
+  }
+  
   LocalInput( LocalInput const & ) = default;
   LocalInput( LocalInput && ) = default;
 

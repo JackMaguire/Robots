@@ -68,7 +68,8 @@ layer = Flatten( data_format='channels_last' )( layer )
 layer = Dense( units=50, activation='relu' )( layer )
 
 n_output = 11
-output = Dense( name="output", units=n_output, activation='softmax' )( layer )
+output = Dense( name="output", units=n_output )( layer )
+output = Softmax()(output)
 
 model = Model(inputs=[input1, input2], outputs=output )
 

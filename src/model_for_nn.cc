@@ -42,6 +42,53 @@ split_by_comma( std::string const & instring ){
 using Game = RobotsGame< DummyVisualizer, false >;
 
 boost::python::tuple
+create_data(
+  BoardInput< 9 > const & board_input,
+  LocalInput const & local_input,
+  KeyPress const key
+){
+  np::dtype const dtype = np::dtype::get_builtin<float>();
+ 
+  p::tuple const board_input_shape =
+    p::make_tuple( board_input_size, board_input_size, BoardInput< board_input_size >::NSTATES );
+  np::ndarray const board_input_py = np::empty( board_input_shape, dtype );
+  {
+    float * ndarray_data = reinterpret_cast< float * > ( board_input_py.get_data() );
+    memcpy( ndarray_data, board_input.data_.data(), sizeof( BoardInput< board_input_size >::Type ) );
+  }
+
+  p::tuple const local_input_shape = p::make_tuple( 3, 3, 5 );
+  np::ndarray const local_input_py = np::empty( local_input_shape, dtype );
+  {
+    float * ndarray_data = reinterpret_cast< float * > ( local_input_py.get_data() );
+    memcpy( ndarray_data, local_input.data_.data(), sizeof( LocalInput::Type ) );
+  }
+
+  p::tuple const key_shape = p::make_tuple( 11 );
+  np::ndarray const output_py = np::empty( key_shape, dtype );
+  {
+    std::array< float, 11 > const data = key.get_one_hot();
+    float * ndarray_data = reinterpret_cast< float * > ( output_py.get_data() );
+    memcpy( ndarray_data, data.data(), sizeof( std::array< float, 11 > ) );
+  }
+
+  //TODO data augmentation
+  return boost::python::make_tuple( board_input_py, local_input_py, output_py );
+}
+
+boost::python::tuple
+sanity_check_values(){
+  Board b;
+  constexpr int board_input_size = 9;
+  BoardInput< board_input_size > board_input( b );
+  LocalInput local_input( b );
+
+  KeyPress key( 1 );
+
+  return create_data( board_input, local_input, key );
+}
+
+boost::python::tuple
 parse_string(
   std::string const & str,
   bool const do_mirror,
@@ -84,34 +131,7 @@ parse_string(
     key.rotate_to_the_right();
   }
 
-  np::dtype const dtype = np::dtype::get_builtin<float>();
- 
-  p::tuple const board_input_shape =
-    p::make_tuple( board_input_size, board_input_size, BoardInput< board_input_size >::NSTATES );
-  np::ndarray const board_input_py = np::empty( board_input_shape, dtype );
-  {
-    float * ndarray_data = reinterpret_cast< float * > ( board_input_py.get_data() );
-    memcpy( ndarray_data, board_input.data_.data(), sizeof( BoardInput< board_input_size >::Type ) );
-  }
-
-  p::tuple const local_input_shape = p::make_tuple( 3, 3, 5 );
-  np::ndarray const local_input_py = np::empty( local_input_shape, dtype );
-  {
-    float * ndarray_data = reinterpret_cast< float * > ( local_input_py.get_data() );
-    memcpy( ndarray_data, local_input.data_.data(), sizeof( LocalInput::Type ) );
-  }
-
-  p::tuple const key_shape = p::make_tuple( 11 );
-  np::ndarray const output_py = np::empty( key_shape, dtype );
-  {
-    std::array< float, 11 > const data = key.get_one_hot();
-    float * ndarray_data = reinterpret_cast< float * > ( output_py.get_data() );
-    memcpy( ndarray_data, data.data(), sizeof( std::array< float, 11 > ) );
-  }
-
-  //TODO data augmentation
-
-  return boost::python::make_tuple( board_input_py, local_input_py, output_py );
+  return create_data( board_input, local_input, key );
 }
 
 BOOST_PYTHON_MODULE( model_for_nn )
@@ -121,6 +141,7 @@ BOOST_PYTHON_MODULE( model_for_nn )
   np::initialize();
 
   def( "parse_string", parse_string );
+  def( "sanity_check_values", sanity_check_values );
 
   class_<Board>("Board")
     .def("get_stringified_representation", &Board::get_stringified_representation )

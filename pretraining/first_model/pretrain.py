@@ -69,7 +69,7 @@ layer = Dense( units=50, activation='relu' )( layer )
 
 n_output = 11
 output = Dense( name="output", units=n_output )( layer )
-output = Softmax()(output)
+output = Softmax( name="softmax" )(output)
 
 model = Model(inputs=[input1, input2], outputs=output )
 

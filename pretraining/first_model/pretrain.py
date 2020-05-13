@@ -34,12 +34,14 @@ view_distance = 4
 n_board_states = 5 # OOB, empty, human, fire, robot (TODO reorder to match enum)
 in1_dim = 1 + (2*view_distance)
 input1 = Input(shape=(in1_dim,in1_dim,n_board_states,), name="in1", dtype="float32" )
-boardconv1 = Conv2D( filters=15, kernel_size=(3,3), padding='valid', data_format='channels_last', activation='relu' )( input1 )
+boardconv1 = Conv2D( filters=25, kernel_size=(3,3), padding='valid', data_format='channels_last', activation='relu' )( input1 )
 print( boardconv1.shape ) #(None, 7, 7, N)
 print( boardconv1.shape[ 1 ] )
 while( boardconv1.shape[ 1 ] > 3 ):
-    boardconv1 = Conv2D( filters=10, kernel_size=(3,3), padding='valid', data_format='channels_last', activation='relu' )( boardconv1 )
+    boardconv1 = Conv2D( filters=15, kernel_size=(3,3), padding='valid', data_format='channels_last', activation='relu' )( boardconv1 )
     print( boardconv1.shape )
+
+#boardconv1= BatchNormalization()(boardconv1)
 
 #Move Input
 n_move_channels = 5
@@ -64,8 +66,8 @@ print( layer.shape )
 
 layer = Flatten( data_format='channels_last' )( layer )
 
-#10
 layer = Dense( units=50, activation='relu' )( layer )
+#layer = Dense( units=100, activation='relu' )( layer )
 
 n_output = 11
 output = Dense( name="output", units=n_output )( layer )
@@ -108,5 +110,5 @@ lrer = tensorflow.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0
 callbacks=[csv_logger,stop,lrer]
 
         
-model.fit( x=[in1arr,in2arr], y=outarr, batch_size=64, epochs=300, verbose=1, callbacks=callbacks, shuffle=True, validation_split=0.25 )
+model.fit( x=[in1arr,in2arr], y=outarr, batch_size=256, epochs=300, verbose=1, callbacks=callbacks, shuffle=True, validation_split=0.25 )
 model.save( args.model )

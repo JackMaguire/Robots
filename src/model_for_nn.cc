@@ -56,7 +56,7 @@ parse_string(
   }
 
   KeyPress key( std::stoi( tokens[ 3 ] ) );
-  if( key.press_ == KepPress::Key::NONE ){
+  if( key.press_ == KeyPress::Key::NONE ){
     return boost::python::make_tuple( int( -1 ) );
   }  
 

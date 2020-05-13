@@ -18,6 +18,8 @@ using namespace boost::python::numpy;
 namespace p = boost::python;
 namespace np = boost::python::numpy;
 
+constexpr int board_input_size = 9;
+
 namespace {
 class DummyVisualizer {
 public:
@@ -79,7 +81,6 @@ create_data(
 boost::python::tuple
 sanity_check_values(){
   Board b;
-  constexpr int board_input_size = 9;
   BoardInput< board_input_size > board_input( b );
   LocalInput local_input( b );
 
@@ -115,7 +116,6 @@ parse_string(
     0 //score = 0, I guess
   );
 
-  constexpr int board_input_size = 9;
   BoardInput< board_input_size > board_input( game.board() );
   LocalInput local_input( game.board() );
 

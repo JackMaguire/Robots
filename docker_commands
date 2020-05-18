@@ -1,0 +1,7 @@
+docker run --cap-add=SYS_PTRACE --security-opt seccomp=unconfined -t jbmaguire/robots:latest -p 8080:8080 
+
+#GDB:
+--cap-add=SYS_PTRACE --security-opt seccomp=unconfined 
+
+#Webhosting
+-p 8080:8080

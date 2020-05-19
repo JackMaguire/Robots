@@ -386,7 +386,11 @@ private:
 };
 }
 
-template< typename Visualizer, bool go_slow = GO_HUMAN_SPEED >
+struct NullVisualizer {
+  static void show( Board const & ){}
+}
+
+template< typename Visualizer = NullVisualizer, bool go_slow = GO_HUMAN_SPEED >
 class RobotsGame {
 public:
   RobotsGame(){

@@ -4,19 +4,27 @@
 #include <Wt/WPaintedWidget.h>
 #include <Wt/WPen.h>
 #include <Wt/WPainter.h>
+#include <Wt/WInteractWidget.h>
 
 #include "robots.hh"
 
-//#include <iostream>
+#include <iostream>
 
-class BoardWidget : public Wt::WPaintedWidget {
+class BoardWidget : public Wt::WPaintedWidget {//, Wt::WInteractWidget {
 public:
   BoardWidget(){
     setLayoutSizeAware( true );
-    setSelectable( false );
+    setSelectable( true );
+    setCanReceiveFocus( true );
     //resize(200, 60);
+    init_listeners();
   }
 
+  void init_listeners(){
+    //keyWentDown().connect( this, & BoardWidget::keyDown );
+    keyPressed().connect( this, & BoardWidget::keyDown );
+  }
+  
   void paintEvent( Wt::WPaintDevice * paintDevice ) override {
     Wt::WPainter painter( paintDevice );
     Wt::WPen pen;
@@ -87,6 +95,76 @@ protected:
       }
     }
     
+  }
+
+  void keyDown( Wt::WKeyEvent const & e ){
+    //std::cout << "KEY " << e.charCode() << std::endl;
+    
+    switch( e.charCode() ){
+    case( 'q' ):
+    case( 'Q' ):
+      handle_move( -1,  1 );
+    break;
+    case( 'w' ):
+    case( 'W' ):
+      handle_move(  0,  1 );
+    break;
+    case( 'e' ):
+    case( 'E' ):
+      handle_move(  1,  1 );
+    break;
+
+    case( 'a' ):
+    case( 'A' ):
+      handle_move( -1,  0 );
+    break;
+    case( 's' ):
+    case( 'S' ):
+      handle_move(  0,  0 );
+    break;
+    case( 'd' ):
+    case( 'D' ):
+      handle_move(  1,  0 );
+    break;
+
+    case( 'z' ):
+    case( 'Z' ):
+      handle_move( -1, -1 );
+    break;
+    case( 'x' ):
+    case( 'X' ):
+      handle_move(  0, -1 );
+    break;
+    case( 'c' ):
+    case( 'C' ):
+      handle_move(  1, -1 );
+    break;
+
+    case( 't' ):
+    case( 'T' ):
+      handle_move( -1, -1, true );
+    break;
+
+    case( ' ' ):
+      handle_move( -1, -1, false, true );
+    break;
+    
+    default:
+      return;
+    }
+  }
+
+  void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
+    bool game_over = false;
+    //TODO visualize cascade
+    if( wait ){
+      game_over = game_.cascade();
+    } else if( teleport ){
+      game_over = game_.teleport();
+    } else {
+      game_over = game_.move_human( dx, dy );      
+    }
+    update();
   }
   
 private:

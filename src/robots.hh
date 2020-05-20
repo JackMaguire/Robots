@@ -441,7 +441,7 @@ public:
       new_round();
     }
 
-    std::cout << "result: " << int( result ) << std::endl;
+    //std::cout << "result: " << int( result ) << std::endl;
     return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN_GAME;
   }
 
@@ -455,7 +455,7 @@ public:
 
     score_ += ( n_robots_start - board_.n_robots() );
 
-    std::cout << "result: " << int( result ) << std::endl;
+    //std::cout << "result: " << int( result ) << std::endl;
 
     if( result == MoveResult::YOU_WIN_ROUND ){
       new_round();
@@ -469,7 +469,7 @@ public:
     int const n_robots_start = board_.n_robots();
     if( n_safe_teleports_remaining_ == 0 ){
       MoveResult const result = board_.teleport( false );
-      std::cout << "result: " << int( result ) << std::endl;
+      //std::cout << "result: " << int( result ) << std::endl;
 
       score_ += ( n_robots_start - board_.n_robots() );
       Visualizer::show( board_ );
@@ -477,7 +477,7 @@ public:
       return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN_GAME;
     } else {
       MoveResult const result = board_.teleport( true );
-      std::cout << "result: " << int( result ) << std::endl;
+      //std::cout << "result: " << int( result ) << std::endl;
       Visualizer::show( board_ );
       score_ += ( n_robots_start - board_.n_robots() );
       --n_safe_teleports_remaining_;

@@ -388,7 +388,7 @@ private:
 
 struct NullVisualizer {
   static void show( Board const & ){}
-}
+};
 
 template< typename Visualizer = NullVisualizer, bool go_slow = GO_HUMAN_SPEED >
 class RobotsGame {

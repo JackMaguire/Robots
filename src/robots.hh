@@ -426,16 +426,16 @@ public:
     //TODO call lower function from this one
     int const n_robots_start = board_.n_robots();
 
-    MoveResult result = MoveResult::CONTINUE;
-    while( result == MoveResult::CONTINUE ){
-      result = board_.move_robots_1_step();
+    latest_result_ = MoveResult::CONTINUE;
+    while( latest_result_ == MoveResult::CONTINUE ){
+      latest_result_ = board_.move_robots_1_step();
       Visualizer::show( board_ );
       if( go_slow ){
 	std::this_thread::sleep_for (std::chrono::milliseconds(500));
       }
     }
 
-    if( result == MoveResult::YOU_WIN_ROUND ){
+    if( latest_result_ == MoveResult::YOU_WIN_ROUND ){
       score_ += n_robots_start;
       n_safe_teleports_remaining_ += n_robots_start;
       if( n_safe_teleports_remaining_ > 10 ) n_safe_teleports_remaining_ = 10;
@@ -443,7 +443,7 @@ public:
     }
 
     //std::cout << "result: " << int( result ) << std::endl;
-    return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN_GAME;
+    return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
   }
 
   template< typename T >
@@ -451,16 +451,16 @@ public:
   cascade( T && updater ){
     int const n_robots_start = board_.n_robots();
 
-    MoveResult result = MoveResult::CONTINUE;
-    while( result == MoveResult::CONTINUE ){
-      result = board_.move_robots_1_step();
+    latest_result_ = MoveResult::CONTINUE;
+    while( latest_result_ == MoveResult::CONTINUE ){
+      latest_result_ = board_.move_robots_1_step();
       updater();
       if( go_slow ){
 	std::this_thread::sleep_for (std::chrono::milliseconds(500));
       }
     }
 
-    if( result == MoveResult::YOU_WIN_ROUND ){
+    if( latest_result_ == MoveResult::YOU_WIN_ROUND ){
       score_ += n_robots_start;
       n_safe_teleports_remaining_ += n_robots_start;
       if( n_safe_teleports_remaining_ > 10 ) n_safe_teleports_remaining_ = 10;
@@ -468,7 +468,7 @@ public:
     }
 
     //std::cout << "result: " << int( result ) << std::endl;
-    return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN_GAME;
+    return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
   }
 
   //true if game over
@@ -476,42 +476,42 @@ public:
   move_human( int const dx, int const dy ){
     int const n_robots_start = board_.n_robots();
 
-    MoveResult const result = board_.move_human( dx, dy );
+    latest_result_ = board_.move_human( dx, dy );
     Visualizer::show( board_ );
 
     score_ += ( n_robots_start - board_.n_robots() );
 
     //std::cout << "result: " << int( result ) << std::endl;
 
-    if( result == MoveResult::YOU_WIN_ROUND ){
+    if( latest_result_ == MoveResult::YOU_WIN_ROUND ){
       new_round();
     }
 
-    return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN_GAME;
+    return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
   }
 
   GameOverBool
   teleport(){
     int const n_robots_start = board_.n_robots();
     if( n_safe_teleports_remaining_ == 0 ){
-      MoveResult const result = board_.teleport( false );
+      latest_result_ = board_.teleport( false );
       //std::cout << "result: " << int( result ) << std::endl;
 
       score_ += ( n_robots_start - board_.n_robots() );
       Visualizer::show( board_ );
       std::cout << "You have 0 safe teleports remaining" << std::endl;
-      return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN_GAME;
+      return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
     } else {
-      MoveResult const result = board_.teleport( true );
+      latest_result_ = board_.teleport( true );
       //std::cout << "result: " << int( result ) << std::endl;
       Visualizer::show( board_ );
       score_ += ( n_robots_start - board_.n_robots() );
       --n_safe_teleports_remaining_;
-      if( result == MoveResult::YOU_LOSE ){
+      if( latest_result_ == MoveResult::YOU_LOSE ){
 	std::cout << "That loss should not have counted!" << std::endl;
       }
       std::cout << "You have " << n_safe_teleports_remaining_ << " safe teleports remaining" << std::endl;
-      return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN_GAME;//losing should never happen
+      return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;//losing should never happen
     }
   }
 
@@ -547,6 +547,8 @@ private:
   int n_safe_teleports_remaining_ = 0;
 
   long int score_ = 0;
+  
+  MoveResult latest_result_ = MoveResult::CONTINUE;
 };
 
 

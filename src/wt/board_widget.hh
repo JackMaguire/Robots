@@ -174,6 +174,10 @@ protected:
       game_over = game_.move_human( dx, dy );      
     }
     update();
+
+    if( game_over ){
+      
+    }
   }
   
 private:

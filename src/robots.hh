@@ -423,12 +423,38 @@ public:
 
   GameOverBool
   cascade(){
+    //TODO call lower function from this one
     int const n_robots_start = board_.n_robots();
 
     MoveResult result = MoveResult::CONTINUE;
     while( result == MoveResult::CONTINUE ){
       result = board_.move_robots_1_step();
       Visualizer::show( board_ );
+      if( go_slow ){
+	std::this_thread::sleep_for (std::chrono::milliseconds(500));
+      }
+    }
+
+    if( result == MoveResult::YOU_WIN_ROUND ){
+      score_ += n_robots_start;
+      n_safe_teleports_remaining_ += n_robots_start;
+      if( n_safe_teleports_remaining_ > 10 ) n_safe_teleports_remaining_ = 10;
+      new_round();
+    }
+
+    //std::cout << "result: " << int( result ) << std::endl;
+    return result == MoveResult::YOU_LOSE || result == MoveResult::YOU_WIN_GAME;
+  }
+
+  template< typename T >
+  GameOverBool
+  cascade( T && updater ){
+    int const n_robots_start = board_.n_robots();
+
+    MoveResult result = MoveResult::CONTINUE;
+    while( result == MoveResult::CONTINUE ){
+      result = board_.move_robots_1_step();
+      updater();
       if( go_slow ){
 	std::this_thread::sleep_for (std::chrono::milliseconds(500));
       }

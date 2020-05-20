@@ -9,6 +9,8 @@
 #include "robots.hh"
 
 #include <iostream>
+#include <mutex>
+
 
 class BoardWidget : public Wt::WPaintedWidget {//, Wt::WInteractWidget {
 public:
@@ -99,6 +101,7 @@ protected:
 
   void keyDown( Wt::WKeyEvent const & e ){
     //std::cout << "KEY " << e.charCode() << std::endl;
+    std::lock_guard<std::mutex> guard( move_mutex_ );
     
     switch( e.charCode() ){
     case( 'q' ):
@@ -156,9 +159,15 @@ protected:
 
   void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
     bool game_over = false;
-    //TODO visualize cascade
     if( wait ){
-      game_over = game_.cascade();
+      //TODO
+      //This is going to require some hacking.
+      //Need to cascade INSIDE the painting function?
+      //But maybe that still won't work
+      game_over = game_.cascade( [=](){
+	  std::cout << "update!" << std::endl;
+	  this->update();
+	} );
     } else if( teleport ){
       game_over = game_.teleport();
     } else {
@@ -171,4 +180,6 @@ private:
   RobotsGame<> game_;
   int width_ = 0;
   int height_ = 0;
+
+  std::mutex move_mutex_;
 };

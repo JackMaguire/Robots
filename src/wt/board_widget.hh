@@ -176,7 +176,17 @@ protected:
     update();
 
     if( game_over ){
-      
+      switch( game_.latest_result() ){
+      case( MoveResult::YOU_LOSE ):
+	//TODO
+	break;
+      case( MoveResult::YOU_WIN_GAME ):
+	//TODO
+	break;
+      default:
+	//TODO - error?
+	break;
+      }
     }
   }
   

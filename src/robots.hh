@@ -495,15 +495,12 @@ public:
     int const n_robots_start = board_.n_robots();
     if( n_safe_teleports_remaining_ == 0 ){
       latest_result_ = board_.teleport( false );
-      //std::cout << "result: " << int( result ) << std::endl;
-
       score_ += ( n_robots_start - board_.n_robots() );
       Visualizer::show( board_ );
       std::cout << "You have 0 safe teleports remaining" << std::endl;
       return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
     } else {
       latest_result_ = board_.teleport( true );
-      //std::cout << "result: " << int( result ) << std::endl;
       Visualizer::show( board_ );
       score_ += ( n_robots_start - board_.n_robots() );
       --n_safe_teleports_remaining_;
@@ -538,6 +535,10 @@ public:
     round_ = round;
     n_safe_teleports_remaining_ = n_safe_teleports_remaining;
     score_ = score;
+  }
+
+  MoveResult latest_result() const {
+    return latest_result_;
   }
   
 private:

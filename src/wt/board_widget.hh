@@ -20,12 +20,12 @@ public:
   void paintEvent( Wt::WPaintDevice * paintDevice ) override {
     Wt::WPainter painter( paintDevice );
     Wt::WPen pen;
-    pen.setWidth( 0.2 );
+    pen.setWidth( 0.1 );
     painter.setPen( pen );
 
     int const grid_size = calc_grid_size();
     draw_background( painter, grid_size );
-    draw_foreground( painter, grid_size );
+    draw_foreground( game_.board(), painter, grid_size );
   }
 
   void layoutSizeChanged(int width, int height) override {
@@ -61,11 +61,32 @@ protected:
     
   }
 
-  void draw_foreground( Wt::WPainter & painter, int const grid_size ){
-    Wt::WColor robot_color( 10, 10, 100 );
-    Wt::WColor human_color( 10, 100, 10 );
-    Wt::WColor fire_color( 200, 10, 10 );
-    Wt::WColor ml_color( 80, 80, 10 );
+  void draw_foreground( Board const & board, Wt::WPainter & painter, int const grid_size ){
+    Wt::WColor const robot_color( 10, 10, 100 );
+    Wt::WColor const human_color( 10, 100, 10 );
+    Wt::WColor const fire_color( 200, 10, 10 );
+    //Wt::WColor const ml_color( 80, 80, 10 );
+
+    Wt::WBrush const robot_brush( robot_color );
+    Wt::WBrush const human_brush( human_color );
+    Wt::WBrush const fire_brush( fire_color );
+    //Wt::WBrush const ml_brush( ml_color );
+
+    Position p;
+    for( int i = 0; i < WIDTH; ++i ){
+      p.x = i;
+      for( int j = 0; j < HEIGHT; ++j ){
+	p.y = (HEIGHT-1) - j;
+	switch( board.cell( p ) ){
+	case( Occupant::EMPTY ): continue;
+	case( Occupant::ROBOT ): painter.setBrush( robot_brush ); break;
+	case( Occupant::HUMAN ): painter.setBrush( human_brush ); break;
+	case( Occupant::FIRE ):  painter.setBrush(  fire_brush ); break;
+	}
+	painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
+      }
+    }
+    
   }
   
 private:

@@ -157,6 +157,17 @@ protected:
     }
   }
 
+  void display_loser(){
+    Wt::WMessageBox * const messageBox = addChild(
+      Wt::cpp14::make_unique< Wt::WMessageBox >(
+	"You Lose",
+	"<p>You Lose. Play Again?</p>",
+	Wt::Icon::Warning, Wt::StandardButton::Yes //| Wt::StandardButton::No
+      )
+    );
+
+  }
+
   void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
     bool game_over = false;
     if( wait ){
@@ -178,7 +189,7 @@ protected:
     if( game_over ){
       switch( game_.latest_result() ){
       case( MoveResult::YOU_LOSE ):
-	//TODO
+	display_loser();
 	break;
       case( MoveResult::YOU_WIN_GAME ):
 	//TODO

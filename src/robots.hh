@@ -544,10 +544,6 @@ public:
   long int score() const {
     return score_;
   }
-
-  int n_safe_teleports_remaining() const {
-    return n_safe_teleports_remaining_;
-  }
   
 private:
   Board board_;

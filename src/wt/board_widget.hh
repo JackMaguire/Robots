@@ -8,6 +8,7 @@
 #include <Wt/WMessageBox.h>
 
 #include "robots.hh"
+#include "sidebar.hh"
 
 #include <iostream>
 #include <mutex>
@@ -15,7 +16,9 @@
 
 class BoardWidget : public Wt::WPaintedWidget {//, Wt::WInteractWidget {
 public:
-  BoardWidget(){
+  BoardWidget( ScoreWidget * sidebar ):
+    sidebar_(sidebar)
+  {
     setLayoutSizeAware( true );
     setSelectable( true );
     setCanReceiveFocus( true );
@@ -210,6 +213,8 @@ protected:
 	break;
       }
     }
+
+    sidebar_->update_with_new_score( game_.score() );
   }
   
 private:
@@ -218,4 +223,6 @@ private:
   int height_ = 0;
 
   std::mutex move_mutex_;
+
+  ScoreWidget * sidebar_;
 };

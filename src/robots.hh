@@ -540,6 +540,10 @@ public:
   MoveResult latest_result() const {
     return latest_result_;
   }
+
+  long int score() const {
+    return score_;
+  }
   
 private:
   Board board_;

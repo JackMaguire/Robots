@@ -5,6 +5,7 @@
 #include <Wt/WPen.h>
 #include <Wt/WPainter.h>
 #include <Wt/WInteractWidget.h>
+#include <Wt/WMessageBox.h>
 
 #include "robots.hh"
 

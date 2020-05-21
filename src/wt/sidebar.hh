@@ -22,7 +22,7 @@ public:
     tele_->setReadOnly( true );
   }
 
-  void update( RobotsGame const & game  ){
+  void update( RobotsGame<> const & game  ){
     score_->setText( "Score: " + std::to_string( game.score() ) );
     tele_->setText( "Teleports: " + std::to_string( game.n_safe_teleports_remaining()));
   }

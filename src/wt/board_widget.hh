@@ -169,7 +169,7 @@ protected:
     messageBox->buttonClicked().connect(
       [=] {
 	if( messageBox->buttonResult() == Wt::StandardButton::Yes ) {
-	  game_ = RobotsGame();
+	  game_ = RobotsGame<>();
 	}
 	this->removeChild( messageBox );
       }

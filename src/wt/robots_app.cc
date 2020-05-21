@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "board_widget.hh"
+#include "score_widget.hh"
 
 using namespace Wt;
 
@@ -21,6 +22,7 @@ createApplication( Wt::WEnvironment const & env ) {
   
   Wt::WBorderLayout * const border =
     app->root()->setLayout( Wt::cpp14::make_unique< Wt::WBorderLayout >() );
+  border->addWidget( Wt::cpp14::make_unique< ScoreWidget >( ),  Wt::LayoutPosition::East );
   border->addWidget( Wt::cpp14::make_unique< BoardWidget >( ),  Wt::LayoutPosition::Center );
  
   

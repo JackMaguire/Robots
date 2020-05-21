@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "board_widget.hh"
-#include "score_widget.hh"
+#include "sidebar.hh"
 
 using namespace Wt;
 

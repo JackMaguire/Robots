@@ -170,6 +170,7 @@ protected:
       [=] {
 	if( messageBox->buttonResult() == Wt::StandardButton::Yes ) {
 	  game_ = RobotsGame<>();
+	  update();
 	}
 	this->removeChild( messageBox );
       }

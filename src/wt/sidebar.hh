@@ -12,8 +12,7 @@ public:
   ScoreWidget(){
     setHeaderCount(0);
 
-    Wt::Widget * score_element = elementAt(0, 0)->addNew< Wt::WLineEdit >( "Score: 0" );
-    score_ = dynamic_cast< Wt::WLineEdit * >( score_element );
+    score_ = elementAt(0, 0)->addNew< Wt::WLineEdit >( "Score: 0" );
     score_->setReadOnly( true );
   }
 

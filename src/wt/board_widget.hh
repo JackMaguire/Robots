@@ -166,7 +166,15 @@ protected:
 	Wt::Icon::Warning, Wt::StandardButton::Yes //| Wt::StandardButton::No
       )
     );
-
+    messageBox->buttonClicked().connect(
+      [=] {
+	if( messageBox->buttonResult() == Wt::StandardButton::Yes ) {
+	  game_ = RobotsGame();
+	}
+	this->removeChild( messageBox );
+      }
+    );
+    messageBox->show();
   }
 
   void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){

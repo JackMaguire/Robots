@@ -214,7 +214,7 @@ protected:
       }
     }
 
-    sidebar_->update_with_new_score( game_.score() );
+    sidebar_->update( game_ );
   }
   
 private:

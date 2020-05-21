@@ -4,6 +4,8 @@
 #include <Wt/WTable.h>
 #include <Wt/WLineEdit.h>
 
+#include "robots.hh"
+
 #include <string>
 
 //#include "board_widget.hh"
@@ -14,12 +16,18 @@ public:
 
     score_ = elementAt(0, 0)->addNew< Wt::WLineEdit >( "Score: 0" );
     score_->setReadOnly( true );
+
+
+    tele_ = elementAt(1, 0)->addNew< Wt::WLineEdit >( "Teleports: 0" );
+    tele_->setReadOnly( true );
   }
 
-  void update_with_new_score( long unsigned int const score ){
-    score_->setText( "Score: " + std::to_string( score ) );
+  void update( RobotsGame const & game  ){
+    score_->setText( "Score: " + std::to_string( game.score() ) );
+    tele_->setText( "Teleports: " + std::to_string( game.n_safe_teleports_remaining()));
   }
 
 private:
   Wt::WLineEdit * score_;
+  Wt::WLineEdit * tele_;
 };

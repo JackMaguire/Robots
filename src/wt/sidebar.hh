@@ -9,9 +9,9 @@ class ScoreWidget : public Wt::WTable {
 public:
   ScoreWidget(){
     setHeaderCount(0);
-    table->elementAt(0, 0)->addNew< Wt::WLineEdit >( "Score" );
+    elementAt(0, 0)->addNew< Wt::WLineEdit >( "Score" );
   }
 
 private:
   
-}
+};

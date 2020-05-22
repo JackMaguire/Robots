@@ -44,6 +44,8 @@ class OneHotEncoding(gym.Space):
 class DeepChaseGym(gym.Env):
     def __init__(self):
         #self.action_space = spaces.OneHotEncoding( size=11 )
+        self.game = robots_game.GamePtr()
+        
         self.action_space = spaces.Discrete( 11 )
 
         self.ob_space1 = spaces.Box( low=-1, high=np.inf, shape=(9,9,5) )

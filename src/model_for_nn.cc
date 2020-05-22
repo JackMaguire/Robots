@@ -141,6 +141,30 @@ get_observations( Game const & game ){
   return create_data( board_input, local_input );
 }
 
+struct GamePtr {
+  GamePtr(){
+    game_ = std::make_shared< Game >();
+  }
+
+  GameOverBool
+  cascade(){
+    return game_->cascade();
+  }  
+  
+  GameOverBool
+  move_human( int const dx, int const dy ){
+    return game_->move_human( dx, dy );
+  }
+  GameOverBool teleport(){ return game_->teleport(); }
+  
+  int n_safe_teleports_remaining(){ return game_->n_safe_teleports_remaining(); }
+  int round(){ return game_->round(); }
+  long int score(){ return game_->score(); }
+  void reset(){ game_->reset(); }
+  
+  std::shared_ptr< Game > game_;
+};
+
 BOOST_PYTHON_MODULE( model_for_nn )
 {
   using namespace boost::python;
@@ -155,6 +179,15 @@ BOOST_PYTHON_MODULE( model_for_nn )
     .def("get_stringified_representation", &Board::get_stringified_representation )
     .def("load_from_stringified_representation", &Board::load_from_stringified_representation );
 
+  class_<GamePtr>("GamePtr")
+    .def( "fast_cascade", &GamePtr::cascade )
+    .def( "move_human", &GamePtr::move_human )
+    .def( "teleport", &GamePtr::teleport )
+    .def( "n_safe_teleports_remaining", &GamePtr::n_safe_teleports_remaining )
+    .def( "round", &GamePtr::round )
+    .def( "score", &GamePtr::score )
+    .def( "reset", &GamePtr::reset );
+  
   class_<Game>("Game")
     .def( "fast_cascade", &Game::cascade )
     .def( "move_human", &Game::move_human )

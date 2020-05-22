@@ -23,7 +23,7 @@ public:
     tele_->setReadOnly( true );
 
     auto button = elementAt(2, 0)->addNew< Wt::WPushButton >( "Controls" );
-    button->checked().connect
+    button->clicked().connect
       (
        [=] {
 	 std::cout << "CLICK" << std::endl;
@@ -36,7 +36,7 @@ public:
     Wt::WMessageBox * const messageBox = this->addChild(
       Wt::cpp14::make_unique< Wt::WMessageBox >(
 	"Controls",
-	"<p>Move: QWEASDZXC\nTeleport: T\nWait: SpaceBar\nSee Last State: '?'</p>",
+	"<p>Move: QWEASDZXC</p><p>Teleport: T</p><p>Wait: SpaceBar</p><p>See Last State: '?'</p><p>Sometimes you need to click on the board for it to start listening to your keys</p>",
 	Wt::Icon::Warning, Wt::StandardButton::Yes //| Wt::StandardButton::No
       )
     );

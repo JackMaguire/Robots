@@ -143,7 +143,7 @@ class DeepChaseGym(gym.Env):
         
     
     def get_observation(self):
-        observations = robots_game.get_observations( self.game )
+        observations = robots_game.get_observations( self.game ).pop( 2 ) #remove key
         return observations
     
     def reset(self):

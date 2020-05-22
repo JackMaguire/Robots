@@ -11,6 +11,8 @@
 #include <math.h>
 #include <array>
 
+#include <memory>
+
 using namespace boost;
 using namespace boost::python;
 using namespace boost::python::numpy;
@@ -138,7 +140,8 @@ boost::python::tuple
 get_observations( Game const & game ){
   BoardInput< board_input_size > board_input( game.board() );
   LocalInput local_input( game.board() );
-  return create_data( board_input, local_input );
+  KeyPress key( 1 ); //dummy
+  return create_data( board_input, local_input, key );
 }
 
 struct GamePtr {
@@ -148,7 +151,7 @@ struct GamePtr {
 
   GameOverBool
   cascade(){
-    return game_->cascade();
+    return game_->old_cascade();
   }  
   
   GameOverBool
@@ -189,7 +192,7 @@ BOOST_PYTHON_MODULE( model_for_nn )
     .def( "reset", &GamePtr::reset );
   
   class_<Game>("Game")
-    .def( "fast_cascade", &Game::cascade )
+    .def( "fast_cascade", &Game::old_cascade )
     .def( "move_human", &Game::move_human )
     .def( "teleport", &Game::teleport )
     .def( "n_safe_teleports_remaining", &Game::n_safe_teleports_remaining )

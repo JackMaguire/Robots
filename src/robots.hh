@@ -422,7 +422,7 @@ public:
   }
 
   GameOverBool
-  cascade(){
+  old_cascade(){
     //TODO call lower function from this one
     int const n_robots_start = board_.n_robots();
 

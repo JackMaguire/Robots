@@ -544,6 +544,15 @@ public:
   long int score() const {
     return score_;
   }
+
+  void reset(){
+    board_ = Board();
+    round_ = 1;
+    n_safe_teleports_remaining_ = 0;
+    score_ = 0;
+    latest_result_ = MoveResult::CONTINUE;
+    new_round();
+  }
   
 private:
   Board board_;

@@ -134,6 +134,13 @@ parse_string(
   return create_data( board_input, local_input, key );
 }
 
+boost::python::tuple
+get_observations( Game const & game ){
+  BoardInput< board_input_size > board_input( game.board() );
+  LocalInput local_input( game.board() );
+  return create_data( board_input, local_input );
+}
+
 BOOST_PYTHON_MODULE( model_for_nn )
 {
   using namespace boost::python;
@@ -142,6 +149,7 @@ BOOST_PYTHON_MODULE( model_for_nn )
 
   def( "parse_string", parse_string );
   def( "sanity_check_values", sanity_check_values );
+  def( "get_observations", get_observations );
 
   class_<Board>("Board")
     .def("get_stringified_representation", &Board::get_stringified_representation )
@@ -153,5 +161,7 @@ BOOST_PYTHON_MODULE( model_for_nn )
     .def( "teleport", &Game::teleport )
     .def( "n_safe_teleports_remaining", &Game::n_safe_teleports_remaining )
     .def( "round", &Game::round )
+    .def( "score", &Game::score )
+    .def( "reset", &Game::reset )
     .def( "load_from_stringified_representation", &Game::load_from_stringified_representation );
 }

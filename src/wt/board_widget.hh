@@ -6,6 +6,7 @@
 #include <Wt/WPainter.h>
 #include <Wt/WInteractWidget.h>
 #include <Wt/WMessageBox.h>
+#include <Wt/WApplication.h>
 
 #include "robots.hh"
 #include "sidebar.hh"
@@ -16,8 +17,12 @@
 
 class BoardWidget : public Wt::WPaintedWidget {//, Wt::WInteractWidget {
 public:
-  BoardWidget( ScoreWidget * sidebar ):
-    sidebar_(sidebar)
+  BoardWidget(
+	      ScoreWidget * sidebar,
+	      Wt::WApplication * app
+	      ):
+    sidebar_( sidebar ),
+    app_( app )
   {
     setLayoutSizeAware( true );
     setSelectable( true );
@@ -185,13 +190,18 @@ protected:
   void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
     bool game_over = false;
     if( wait ){
+      //TODO look into WTimer: https://www.webtoolkit.eu/wt/doc/reference/html/classWt_1_1WTimer.html
+      //This has some good ideas too: https://redmine.webtoolkit.eu/boards/2/topics/14880?r=14884#message-14884
+      
       //TODO
       //This is going to require some hacking.
       //Need to cascade INSIDE the painting function?
       //But maybe that still won't work
       game_over = game_.cascade( [=](){
 	  std::cout << "update!" << std::endl;
+	  //std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	  this->update();
+	  app_->processEvents();
 	} );
     } else if( teleport ){
       game_over = game_.teleport();
@@ -225,4 +235,5 @@ private:
   std::mutex move_mutex_;
 
   ScoreWidget * sidebar_;
+  Wt::WApplication * app_;
 };

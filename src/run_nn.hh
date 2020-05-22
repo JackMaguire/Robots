@@ -49,6 +49,8 @@ struct TensorDeleter {
 };
 using TensorPtr = std::unique_ptr< TF_Tensor, TensorDeleter >;
 
+void run_sanity_check();
+
 void
 load_session(){
   tf_status = StatusPtr( TF_NewStatus() );
@@ -197,5 +199,17 @@ predict_ai( RobotsGame<T> const & game ){
   std::array< float, 11 > const & results = run_tf( board, local );
   for( int i = 0; i < 11; ++i ){
     std::cout << i << " " << results[ i ] << std::endl;
+  }
+}
+
+void run_sanity_check(){
+  Board b;
+  BoardInput< 9 > board_input( b );
+  LocalInput local_input( b );
+
+  std::array< float, 11 > results = run_tf( board_input, local_input );
+  std::cout << "Sanity Check" << std::endl;
+  for( float f : results ){
+    std::cout << f << std::endl;
   }
 }

@@ -207,9 +207,10 @@ protected:
   void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
     if( display_cached_board_ == true ){
       display_cached_board_ = false;
+      update();
       return;//Don't make them make a mistake
     }
-    
+
     cached_board_ = game_.board();
     
     bool game_over = false;

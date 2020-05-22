@@ -21,6 +21,7 @@ public:
 	      ScoreWidget * sidebar,
 	      Wt::WApplication * app
 	      ):
+    game_(),
     sidebar_( sidebar ),
     app_( app )
   {
@@ -29,6 +30,8 @@ public:
     setCanReceiveFocus( true );
     //resize(200, 60);
     init_listeners();
+
+    cached_board_ = game_.board();
   }
 
   void init_listeners(){
@@ -44,7 +47,12 @@ public:
 
     int const grid_size = calc_grid_size();
     draw_background( painter, grid_size );
-    draw_foreground( game_.board(), painter, grid_size );
+
+    if( display_cached_board_ ) {
+      draw_foreground( cached_board_, painter, grid_size );
+    } else {
+      draw_foreground( game_.board(), painter, grid_size );
+    }
   }
 
   void layoutSizeChanged(int width, int height) override {
@@ -159,13 +167,22 @@ protected:
 
     case( ' ' ):
       handle_move( -1, -1, false, true );
-    break;
-    
+      break;
+
+    case( '?' ):
+      toggle_cached_board();
+      break;
+
     default:
       return;
     }
   }
 
+  void toggle_cached_board(){
+    display_cached_board_ = ! display_cached_board_;
+    update();
+  }
+  
   void display_endgame( std::string const & text ){
     Wt::WMessageBox * const messageBox = addChild(
       Wt::cpp14::make_unique< Wt::WMessageBox >(
@@ -188,6 +205,13 @@ protected:
 
 
   void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
+    if( display_cached_board_ == true ){
+      display_cached_board_ = false;
+      return;//Don't make them make a mistake
+    }
+    
+    cached_board_ = game_.board();
+    
     bool game_over = false;
     if( wait ){
       //TODO look into WTimer: https://www.webtoolkit.eu/wt/doc/reference/html/classWt_1_1WTimer.html
@@ -236,4 +260,8 @@ private:
 
   ScoreWidget * sidebar_;
   Wt::WApplication * app_;
+
+  Board cached_board_;
+  bool display_cached_board_;
 };
+

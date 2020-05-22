@@ -8,6 +8,7 @@
 #include "robots.hh"
 
 #include <string>
+#include <iostream>
 
 //#include "board_widget.hh"
 class ScoreWidget : public Wt::WTable {
@@ -25,6 +26,7 @@ public:
     button->checked().connect
       (
        [=] {
+	 std::cout << "CLICK" << std::endl;
 	 display_controls();
        }
        );

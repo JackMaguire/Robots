@@ -104,6 +104,7 @@ optimizer = ng.optimizers.registry[tool](parametrization=ng.p.Instrumentation(*v
 dummy_input1 = np.zeros( shape=(1,in1_dim,in1_dim,n_board_states) )
 dummy_input2 = np.zeros( shape=(1,3,3,n_board_states) )
 
+#https://github.com/bionicles/neuromax/blob/53385b2566503dc7613a6c7a95d37e747c61887b/archive/scripts/nevergrad-interface.py
 initial_weights = model.get_weights()
 initial_weights = [np.random.permutation(w.flat).reshape(w.shape) for w in initial_weights]
 # Faster, but less random: only permutes along the first dimension

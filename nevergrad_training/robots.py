@@ -16,6 +16,7 @@ import tensorflow.keras.backend as K
 import tensorflow.keras.callbacks
 import tensorflow.keras
 import numpy as np
+import math
 
 import sys
 #import h5py
@@ -39,9 +40,9 @@ def create_model():
     in1_dim = 1 + (2*view_distance)
     input1 = Input(shape=(in1_dim,in1_dim,n_board_states,), name="in1", dtype="float32" )
     boardconv1 = Conv2D( filters=2, kernel_size=(1,1), padding='valid', data_format='channels_last', activation='relu' )( input1 )
-    print( boardconv1.shape )
+    #print( boardconv1.shape )
     boardconv1 = LocallyConnected2D( filters=4, kernel_size=(3,3), strides=(2,2), padding='valid', data_format='channels_last', activation='relu' )( boardconv1 )
-    print( boardconv1.shape )
+    #print( boardconv1.shape )
     #exit( 0 )
     boardconv1 = LocallyConnected2D( filters=5, kernel_size=(2,2), strides=(1,1), padding='valid', data_format='channels_last', activation='relu' )( boardconv1 )
     #boardconv1= BatchNormalization()(boardconv1)
@@ -69,7 +70,7 @@ def create_model():
 
     #(2,2,N)
     layer = LocallyConnected2D( filters=7, kernel_size=(2,2), padding='valid', data_format='channels_last', activation='relu' )( layer )
-    print( layer.shape )
+    #print( layer.shape )
 
     layer = Flatten( data_format='channels_last' )( layer )
 
@@ -87,7 +88,7 @@ def create_model():
 
     metrics_to_output=[ 'accuracy' ]
     model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=metrics_to_output )
-    model.summary()
+    #model.summary()
 
     initial_weights = model.get_weights()
     initial_weights = [np.random.permutation(w.flat).reshape(w.shape) for w in initial_weights]
@@ -140,7 +141,7 @@ def run_single_simulation( model ):
         elif move == 9: #T
             game_over = game.teleport()
         elif move == 10: #SPACE
-            game_over = game.cascade()
+            game_over = game.fast_cascade()
 
         if game_over:
             break

@@ -15,6 +15,7 @@ def send_job_to_node( comm, dofs, node, tag=1 ):
     comm.send( dofs, dest=node, tag=tag )
 
 def interpret_result( bundle ):
+    global best_score_seen, t0, all_results_dofs, all_results_scores 
     dofs = bundle[ 0 ]
     score = bundle[ 1 ]
     #print( "RESULT", score, (time.time() - t0), dofs )
@@ -72,8 +73,8 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
             for prefix in in_prefices.split( "," ):
                 filenamed = prefix + ".all_results_dofs.npy"
                 filenames = prefix + ".all_results_scores.npy"
-                dofs = np.load( filenamed, allow_pickle=False )
-                score = np.load( filenames, allow_pickle=False )
+                dofs = np.load( filenamed, allow_pickle=True )
+                score = np.load( filenames, allow_pickle=True )
                 assert( len( dofs ) == len( score ) )
                 for i in range( 0, len( dofs ) ):
                     #optimizer.suggest( dofs[ i ] )
@@ -87,7 +88,7 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
         begin = time.time()
         while keep_going( hours_elapsed=float(time.time()-begin)/3600.0, hours_limit=hours, njobs_sent=njobs_sent, budget=budget ):
         #for b in range( 0, budget ):
-            if njobs_sent % 1 == 0:
+            if njobs_sent % 100 == 0:
                 print( "Sent", njobs_sent, "jobs from budget of", budget )
             if len( available_nodes ) == 0:
                 #All are busy, wait for results
@@ -125,5 +126,5 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
         test1 = np.asarray( all_results_dofs )
         print( test1.shape )
 
-        np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs), allow_pickle=False )
-        np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores), allow_pickle=False )
+        np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs), allow_pickle=True )
+        np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores), allow_pickle=True )

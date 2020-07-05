@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #requires sudo apt-get install libboost-all-dev
+#might also need sudo apt-get install python3-dev
 
 #CXX="clang++" ; thingy="-install_name"
 CXX="g++" ; thingy="-soname"

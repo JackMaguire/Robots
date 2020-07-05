@@ -25,6 +25,7 @@ def interpret_result( bundle ):
     if score < best_score_seen:
         best_score_seen = score
         best_dofs = dofs
+        #dump_model( best_dofs, "checkpoint.h5" )
         all_results_dofs.append( np.asarray( dofs.value ) )
         all_results_scores.append( np.asarray( score ) )
 
@@ -122,7 +123,7 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
     finally:
         print( "Spinning down after", time.time() - begin, "seconds"  )
         #save here just in case execute_kill_seq hangs
-        print( best_score )
+        print( best_score_seen )
         dump_model( best_dofs, out_prefix + ".h5" )
         np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs, dtype=object), allow_pickle=True )
         np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores), allow_pickle=True )
@@ -132,7 +133,7 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
         print( "Ran", njobs_sent, "jobs" )
         
         #save again once you have all of the data
-        print( best_score )
+        print( best_score_seen )
         dump_model( best_dofs, out_prefix + ".h5" )
         np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs, dtype=object), allow_pickle=True )
         np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores, dtype=object), allow_pickle=True )

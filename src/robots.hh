@@ -3,6 +3,8 @@
 
 #pragma once
 
+#define MUTE
+
 #include <array>
 #include <vector>
 #include <set>
@@ -138,10 +140,14 @@ public:
 
       if( empty_positions.empty() ){
 	if( allow_robot_movement ){
+#ifndef MUTE
 	  std::cout << "No Safe Positions! Trying Fallback Plan" << std::endl;
+#endif
 	  return find_open_space( false );
 	} else {
+#ifndef MUTE
 	  std::cout << "No safe positions even in fallback plan!!" << std::endl;
+#endif
 	  //This is very unexpected, don't know how to handle it
 	}
       }
@@ -399,16 +405,20 @@ public:
 
   void
   new_round(){
+#ifndef MUTE
     std::cout << "You have " << n_safe_teleports_remaining_ << " safe teleports remaining" << std::endl;
     std::cout << "Score: " << score_ << std::endl;
+#endif
 
     long int expected_score = 0;
     for( int r = 1; r <= round_; ++r ){
       expected_score += r * 10;
     }
+#ifndef MUTE
     if( score_ != expected_score ){
       std::cout << "Expected score is " << expected_score << std::endl;
     }
+#endif
 
     if( round_ == MAX_N_ROUNDS ){
       //TODO handle win
@@ -497,17 +507,21 @@ public:
       latest_result_ = board_.teleport( false );
       score_ += ( n_robots_start - board_.n_robots() );
       Visualizer::show( board_ );
+#ifndef MUTE
       std::cout << "You have 0 safe teleports remaining" << std::endl;
+#endif
       return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
     } else {
       latest_result_ = board_.teleport( true );
       Visualizer::show( board_ );
       score_ += ( n_robots_start - board_.n_robots() );
       --n_safe_teleports_remaining_;
+#ifndef MUTE
       if( latest_result_ == MoveResult::YOU_LOSE ){
 	std::cout << "That loss should not have counted!" << std::endl;
       }
       std::cout << "You have " << n_safe_teleports_remaining_ << " safe teleports remaining" << std::endl;
+#endif
       return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;//losing should never happen
     }
   }

@@ -10,12 +10,13 @@ all_results_scores = []
 
 t0 = time.time()
 best_score_seen = 0
+best_dofs = 0
 
 def send_job_to_node( comm, dofs, node, tag=1 ):
     comm.send( dofs, dest=node, tag=tag )
 
 def interpret_result( bundle ):
-    global best_score_seen, t0, all_results_dofs, all_results_scores 
+    global best_score_seen, t0, all_results_dofs, all_results_scores, best_dofs
     dofs = bundle[ 0 ]
     score = bundle[ 1 ]
     #print( "RESULT", score, (time.time() - t0), dofs )
@@ -23,6 +24,7 @@ def interpret_result( bundle ):
 
     if score < best_score_seen:
         best_score_seen = score
+        best_dofs = dofs
         all_results_dofs.append( np.asarray( dofs.value ) )
         all_results_scores.append( np.asarray( score ) )
 
@@ -36,6 +38,7 @@ def execute_kill_seq( comm, available_nodes, working_nodes ):
 
     while len( available_nodes ) > 0:
         node = available_nodes.pop()
+        print( "telling", node, "to die")
         tell_node_to_die( comm, node )
         
     while len( working_nodes ) > 0:
@@ -45,6 +48,7 @@ def execute_kill_seq( comm, available_nodes, working_nodes ):
         
         source = status.Get_source()
         working_nodes.remove( source )
+        print( "Telling", source, "to die")
         tell_node_to_die( comm, source )
 
 def keep_going( hours_elapsed, hours_limit, njobs_sent, budget ):
@@ -117,14 +121,18 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
 
     finally:
         print( "Spinning down after", time.time() - begin, "seconds"  )
-        #end for b    
+        #save here just in case execute_kill_seq hangs
+        print( best_score )
+        dump_model( best_dofs, out_prefix + ".h5" )
+        np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs, dtype=object), allow_pickle=True )
+        np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores), allow_pickle=True )
+
         execute_kill_seq( comm, available_nodes, working_nodes )
         print( "Finished after", time.time() - begin, "seconds"  )
         print( "Ran", njobs_sent, "jobs" )
-        print( optimizer.provide_recommendation().value )
-
-        test1 = np.asarray( all_results_dofs )
-        print( test1.shape )
-
-        np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs), allow_pickle=True )
+        
+        #save again once you have all of the data
+        print( best_score )
+        dump_model( best_dofs, out_prefix + ".h5" )
+        np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs, dtype=object), allow_pickle=True )
         np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores), allow_pickle=True )

@@ -148,6 +148,11 @@ def run_single_simulation( model ):
     
     return game.score()
 
+def dump_model( weights, filename ):
+    model = create_model()
+    model.set_weights([tf.convert_to_tensor(arg, dtype=tf.float32) for arg in weights.args])
+    model.save( filename )
+
 def score_similation( weights ):
     model = create_model()
     model.set_weights([tf.convert_to_tensor(arg, dtype=tf.float32) for arg in weights.args])

@@ -135,4 +135,4 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
         print( best_score )
         dump_model( best_dofs, out_prefix + ".h5" )
         np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs, dtype=object), allow_pickle=True )
-        np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores), allow_pickle=True )
+        np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores, dtype=object), allow_pickle=True )

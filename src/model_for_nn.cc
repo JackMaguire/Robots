@@ -164,6 +164,15 @@ struct GamePtr {
   int round(){ return game_->round(); }
   long int score(){ return game_->score(); }
   void reset(){ game_->reset(); }
+
+  boost::python::tuple
+  get_observations(){
+    BoardInput< board_input_size > board_input( game_->board() );
+    LocalInput local_input( game_->board() );
+    KeyPress key( 1 ); //dummy
+    return create_data( board_input, local_input, key );
+  }
+
   
   std::shared_ptr< Game > game_;
 };
@@ -184,6 +193,7 @@ BOOST_PYTHON_MODULE( model_for_nn )
 
   class_<GamePtr>("GamePtr")
     .def( "fast_cascade", &GamePtr::cascade )
+    .def( "get_observations", &GamePtr::get_observations )
     .def( "move_human", &GamePtr::move_human )
     .def( "teleport", &GamePtr::teleport )
     .def( "n_safe_teleports_remaining", &GamePtr::n_safe_teleports_remaining )

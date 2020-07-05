@@ -3,8 +3,13 @@ import nevergrad as ng
 import numpy as np
 import time
 
+from robots import *
+
 all_results_dofs = []
 all_results_scores = []
+
+t0 = time.time()
+best_score_seen = 0
 
 def send_job_to_node( comm, dofs, node, tag=1 ):
     comm.send( dofs, dest=node, tag=tag )
@@ -12,10 +17,13 @@ def send_job_to_node( comm, dofs, node, tag=1 ):
 def interpret_result( bundle ):
     dofs = bundle[ 0 ]
     score = bundle[ 1 ]
-    print( "RESULT", score, dofs )
+    #print( "RESULT", score, (time.time() - t0), dofs )
+    print( "RESULT", score, (time.time() - t0) )
 
-    all_results_dofs.append( np.asarray( dofs.value ) )
-    all_results_scores.append( np.asarray( score ) )
+    if score < best_score_seen:
+        best_score_seen = score
+        all_results_dofs.append( np.asarray( dofs.value ) )
+        all_results_scores.append( np.asarray( score ) )
 
 def tell_node_to_die( comm, node ):
     send_job_to_node( comm, "die", node, tag=0 )
@@ -55,8 +63,7 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
     njobs_sent = 0
 
     try:
-        #USER TODO
-        Params = ng.p.Array( shape=(3,) )
+        Params = parameterization_for_model( create_model() )
         optimizer = ng.optimizers.registry[ opt ]( parametrization=Params, budget=budget, num_workers=(nprocs-1) )
 
         #Load if needed

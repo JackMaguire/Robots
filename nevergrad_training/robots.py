@@ -34,7 +34,8 @@ import nevergrad as ng
 #Board Input
 
 def create_model():
-
+    #gra = tf.Graph()
+    #with gra.as_default():
     view_distance = 4
     n_board_states = 5 # OOB, empty, human, fire, robot (TODO reorder to match enum)
     in1_dim = 1 + (2*view_distance)
@@ -60,7 +61,7 @@ def create_model():
     layer = Conv2D( filters=10, kernel_size=(1,1), padding='valid', activation='relu' )( layer )
     layer = Conv2D( filters=5, kernel_size=(1,1), padding='valid', activation='relu' )( layer )
 
-    
+
     #This should be of shape( 3, 3, n_board_states + 5 )
     layer = tensorflow.keras.layers.concatenate( [boardconv1,layer], name="merge", axis=-1 )
 
@@ -76,7 +77,7 @@ def create_model():
 
     input3 = Input(shape=(1,), name="in3", dtype="float32" )
     layer = tensorflow.keras.layers.concatenate( [input3,layer], name="merge_teleport", axis=-1 )
-    
+
     layer = Dense( units=25, activation='relu' )( layer )
     #layer = Dense( units=100, activation='relu' )( layer )
 
@@ -153,9 +154,21 @@ def dump_model( weights, filename ):
     model.set_weights([tf.convert_to_tensor(arg, dtype=tf.float32) for arg in weights.args])
     model.save( filename )
 
-def score_similation( weights ):
+def score_simulation( *weights ):
+    #print( "GO" )
     model = create_model()
-    model.set_weights([tf.convert_to_tensor(arg, dtype=tf.float32) for arg in weights.args])
+    '''
+    print( len( model.get_weights() ) )
+    print( len( weights ) )
+    for i in range( 0, 18 ):
+        print( weights[ i ].shape, model.get_weights()[i].shape )
+    '''
+    model.set_weights( weights )
+    #for w in weights:
+    #    print( w )
+    exit( 0 )
+
+    model.set_weights([tf.convert_to_tensor(arg, dtype=tf.float32) for arg in weights])
 
     scores = np.zeros( 10 )
     #play 10 games

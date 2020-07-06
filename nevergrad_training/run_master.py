@@ -25,7 +25,7 @@ def interpret_result( bundle ):
     if score < best_score_seen:
         best_score_seen = score
         best_dofs = dofs
-        #dump_model( best_dofs, "checkpoint.h5" )
+        dump_model( best_dofs, "checkpoint.h5" )
         all_results_dofs.append( np.asarray( dofs.value ) )
         all_results_scores.append( np.asarray( score ) )
 

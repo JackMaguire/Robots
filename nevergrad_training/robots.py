@@ -32,10 +32,7 @@ import nevergrad as ng
 #args = parser.parse_args()
 
 #Board Input
-
-def create_model():
-    #gra = tf.Graph()
-    #with gra.as_default():
+def create_model2():
     view_distance = 4
     n_board_states = 5 # OOB, empty, human, fire, robot (TODO reorder to match enum)
     in1_dim = 1 + (2*view_distance)
@@ -97,6 +94,12 @@ def create_model():
 
     return model
 
+
+def create_model():
+    gra = tf.Graph()
+    with gra.as_default():
+        return create_model2()
+
 def parameterization_for_model( model ):
 
     #[print(weight.shape) for weight in model.trainable_weights]
@@ -155,31 +158,21 @@ def dump_model( weights, filename ):
     model.save( filename )
 
 def score_simulation( *weights ):
-    #print( "GO" )
-    model = create_model()
-    '''
-    print( len( model.get_weights() ) )
-    print( len( weights ) )
-    for i in range( 0, 18 ):
-        print( weights[ i ].shape, model.get_weights()[i].shape )
-    '''
-    model.set_weights( weights )
-    #for w in weights:
-    #    print( w )
-    exit( 0 )
+    gra = tf.Graph()
+    with gra.as_default():
+        model = create_model2()
+        model.set_weights( weights )
 
-    model.set_weights([tf.convert_to_tensor(arg, dtype=tf.float32) for arg in weights])
+        scores = np.zeros( 10 )
+        #play 10 games
+        for i in range( 0, 10 ):
+            scores[ i ] = run_single_simulation( model )
+            #perform transform
+            if scores[ i ] != 0:
+                scores[ i ] = -1.0 * math.log10( scores[ i ] )
 
-    scores = np.zeros( 10 )
-    #play 10 games
-    for i in range( 0, 10 ):
-        scores[ i ] = run_single_simulation( model )
-        #perform transform
-        if scores[ i ] != 0:
-            scores[ i ] = -1.0 * math.log10( scores[ i ] )
-            
-    #return mean
-    return np.mean( scores )
+        #return mean
+        return np.mean( scores )
     
 '''
 #vars = [ng.var.Array(*tuple(weight.shape)).bounded(-10, 10) for weight in model.trainable_weights]

@@ -431,7 +431,7 @@ public:
     }
   }
 
-  /*GameOverBool
+  GameOverBool
   old_cascade(){
     //TODO call lower function from this one
     int const n_robots_start = board_.n_robots();
@@ -454,7 +454,7 @@ public:
 
     //std::cout << "result: " << int( result ) << std::endl;
     return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
-    }*/
+  }
 
   template< typename T >
   GameOverBool

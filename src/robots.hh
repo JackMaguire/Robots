@@ -14,7 +14,7 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
-
+#include <assert.h>
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
 
@@ -431,7 +431,7 @@ public:
     }
   }
 
-  GameOverBool
+  /*GameOverBool
   old_cascade(){
     //TODO call lower function from this one
     int const n_robots_start = board_.n_robots();
@@ -454,7 +454,7 @@ public:
 
     //std::cout << "result: " << int( result ) << std::endl;
     return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
-  }
+    }*/
 
   template< typename T >
   GameOverBool
@@ -500,30 +500,51 @@ public:
     return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
   }
 
-  GameOverBool
-  teleport(){
-    int const n_robots_start = board_.n_robots();
-    if( n_safe_teleports_remaining_ == 0 ){
+private:
+  void danger_tele(){
       latest_result_ = board_.teleport( false );
-      score_ += ( n_robots_start - board_.n_robots() );
       Visualizer::show( board_ );
 #ifndef MUTE
       std::cout << "You have 0 safe teleports remaining" << std::endl;
 #endif
-      return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
-    } else {
-      latest_result_ = board_.teleport( true );
-      Visualizer::show( board_ );
-      score_ += ( n_robots_start - board_.n_robots() );
-      --n_safe_teleports_remaining_;
-#ifndef MUTE
-      if( latest_result_ == MoveResult::YOU_LOSE ){
-	std::cout << "That loss should not have counted!" << std::endl;
+      if( latest_result_ == MoveResult::CONTINUE ){
+	assert( board_.n_robots() > 0 );
       }
-      std::cout << "You have " << n_safe_teleports_remaining_ << " safe teleports remaining" << std::endl;
-#endif
-      return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;//losing should never happen
+  }
+
+  void safe_tele(){
+    latest_result_ = board_.teleport( true );
+    Visualizer::show( board_ );
+    --n_safe_teleports_remaining_;
+#ifndef MUTE
+    if( latest_result_ == MoveResult::YOU_LOSE ){
+      std::cout << "That loss should not have counted!" << std::endl;
     }
+    std::cout << "You have " << n_safe_teleports_remaining_ << " safe teleports remaining" << std::endl;
+#endif
+    // assert( ! game_over );
+  }
+
+public:  
+  GameOverBool
+  teleport(){
+    int const n_robots_start = board_.n_robots();
+    
+    if( n_safe_teleports_remaining_ == 0 ) danger_tele();
+    else safe_tele();
+
+    score_ += ( n_robots_start - board_.n_robots() );
+    
+    if( latest_result_ == MoveResult::YOU_WIN_ROUND ){
+      new_round();
+    }
+    else if( latest_result_ == MoveResult::CONTINUE ){
+      assert( board_.n_robots() > 0 );
+    }
+
+    GameOverBool const game_over =
+      (latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME);
+    return game_over;
   }
 
   Board const & board() const {

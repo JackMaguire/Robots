@@ -153,7 +153,7 @@ def dump_model( weights, filename ):
     model.set_weights([tf.convert_to_tensor(arg, dtype=tf.float32) for arg in weights.args])
     model.save( filename )
 
-def score_similation( weights ):
+def score_similation( weights, filename ):
     model = create_model()
     model.set_weights([tf.convert_to_tensor(arg, dtype=tf.float32) for arg in weights.args])
 
@@ -166,6 +166,10 @@ def score_similation( weights ):
             scores[ i ] = -1.0 * math.log10( scores[ i ] )
             
     #return mean
+    mean = np.mean( scores )
+    if mean < -2.0:
+        #then on average we will more than 100 robots
+        model.save( filename )
     return np.mean( scores )
     
 '''

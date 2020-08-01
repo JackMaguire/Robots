@@ -19,8 +19,9 @@ def interpret_result( bundle ):
     global best_score_seen, t0, all_results_dofs, all_results_scores, best_dofs
     dofs = bundle[ 0 ]
     score = bundle[ 1 ]
+    filename = bundle[ 2 ]
     #print( "RESULT", score, (time.time() - t0), dofs )
-    print( "RESULT", score, (time.time() - t0) )
+    print( "RESULT", score, (time.time() - t0), filename )
 
     if score < best_score_seen:
         best_score_seen = score

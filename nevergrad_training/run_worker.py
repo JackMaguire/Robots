@@ -4,7 +4,10 @@ from robots import *
 
 def run_worker( comm, rank, out_prefix ):
 
+    i = 0
+    
     while True:
+        i += 1
         status = MPI.Status()
         #print( "waiting:", rank )
         dofs = comm.recv( source=0, tag=MPI.ANY_TAG, status=status )
@@ -14,7 +17,8 @@ def run_worker( comm, rank, out_prefix ):
             comm.send( 0, dest=0, tag=0 )
             break
 
-        final_score = score_similation( dofs )
+        potential_filename = str( comm ) + "_" + str(i) + ".h5"
+        final_score = score_similation( dofs, potential_filename )
 
-        bundle = [ dofs, final_score ]
+        bundle = [ dofs, final_score, potential_filename ]
         comm.send( bundle, dest=0, tag=1 )

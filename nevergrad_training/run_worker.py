@@ -3,7 +3,7 @@ from mpi4py import MPI
 from robots import *
 
 def run_worker( comm, rank, out_prefix ):
-
+    
     i = 0
     best_score = -1.0
     

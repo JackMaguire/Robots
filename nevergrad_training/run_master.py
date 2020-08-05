@@ -93,7 +93,6 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
 
         begin = time.time()
         while keep_going( hours_elapsed=float(time.time()-begin)/3600.0, hours_limit=hours, njobs_sent=njobs_sent, budget=budget ):
-        #for b in range( 0, budget ):
             if njobs_sent % 100 == 0:
                 print( "Sent", njobs_sent, "jobs from budget of", budget )
             if len( available_nodes ) == 0:

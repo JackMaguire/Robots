@@ -154,6 +154,10 @@ def dump_model( weights, filename ):
     model.save( filename )
 
 def score_similation( weights, filename, score_to_beat ):
+
+    import gc
+    gc.enable()
+    
     model = create_model()
     model.set_weights([tf.convert_to_tensor(arg, dtype=tf.float32) for arg in weights.args])
 
@@ -169,4 +173,8 @@ def score_similation( weights, filename, score_to_beat ):
     mean = np.mean( scores )
     if mean < score_to_beat:
         model.save( filename + "." + str( mean ) + ".h5" )
+
+    K.clear_session()
+    n = gc.collect()
+        
     return mean

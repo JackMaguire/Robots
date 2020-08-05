@@ -148,7 +148,7 @@ struct GamePtr {
   GamePtr(){
     game_ = std::make_shared< Game >();
   }
-
+  
   GameOverBool
   cascade(){
     return game_->old_cascade();

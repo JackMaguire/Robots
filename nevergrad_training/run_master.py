@@ -5,8 +5,8 @@ import time
 
 from robots import *
 
-all_results_dofs = []
-all_results_scores = []
+#all_results_dofs = []
+#all_results_scores = []
 
 t0 = time.time()
 best_score_seen = 0
@@ -16,7 +16,7 @@ def send_job_to_node( comm, dofs, node, tag=1 ):
     comm.send( dofs, dest=node, tag=tag )
 
 def interpret_result( bundle ):
-    global best_score_seen, t0, all_results_dofs, all_results_scores, best_dofs
+    global best_score_seen, best_dofs
     dofs = bundle[ 0 ]
     score = bundle[ 1 ]
     filename = bundle[ 2 ]
@@ -27,8 +27,8 @@ def interpret_result( bundle ):
         best_score_seen = score
         best_dofs = dofs
         dump_model( best_dofs, "checkpoint.h5" )
-        all_results_dofs.append( np.asarray( dofs.value ) )
-        all_results_scores.append( np.asarray( score ) )
+        #all_results_dofs.append( np.asarray( dofs.value ) )
+        #all_results_scores.append( np.asarray( score ) )
 
 def tell_node_to_die( comm, node ):
     send_job_to_node( comm, "die", node, tag=0 )
@@ -125,8 +125,8 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
         #save here just in case execute_kill_seq hangs
         print( best_score_seen )
         dump_model( best_dofs, out_prefix + ".h5" )
-        np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs, dtype=object), allow_pickle=True )
-        np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores), allow_pickle=True )
+        #np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs, dtype=object), allow_pickle=True )
+        #np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores), allow_pickle=True )
 
         execute_kill_seq( comm, available_nodes, working_nodes )
         print( "Finished after", time.time() - begin, "seconds"  )
@@ -135,5 +135,5 @@ def run_master( comm, nprocs, rank, opt, budget, out_prefix, in_prefices, hours 
         #save again once you have all of the data
         print( best_score_seen )
         dump_model( best_dofs, out_prefix + ".h5" )
-        np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs, dtype=object), allow_pickle=True )
-        np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores, dtype=object), allow_pickle=True )
+        #np.save( out_prefix + ".all_results_dofs.npy", np.asarray(all_results_dofs, dtype=object), allow_pickle=True )
+        #np.save( out_prefix + ".all_results_scores.npy", np.asarray(all_results_scores, dtype=object), allow_pickle=True )

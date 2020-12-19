@@ -327,6 +327,16 @@ public:
     return move_robots_1_step();
   }
 
+  bool
+  move_is_cascade_safe( int const dx, int const dy ) const {
+    Board copy = (*this);
+    MoveResult result = copy.move_human( dx, dy );
+    while ( result == MoveResult::CONTINUE ){
+      result = copy.move_human( 0, 0 );
+    }
+    return result != MoveResult::YOU_LOSE;
+  }
+
   std::string
   get_stringified_representation() const {
     std::stringstream ss;
@@ -363,6 +373,19 @@ public:
 	}
       }//y
     }//x
+  }
+
+  std::string
+  get_safe_moves() const {
+    std::stringstream ss;
+    for( int dx = -1; dx < 2; ++dx )
+      for( int dy = -1; dy < 2; ++dy )
+	if( move_is_cascade_safe( dx, dy ) ){
+	  ss << "1";
+	} else {
+	  ss << "0";
+	}
+    return ss.str();
   }
 
   Position const & human_position() const {

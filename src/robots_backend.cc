@@ -2,7 +2,7 @@
 // g++ robots_backend.cc -std=c++2a -o robots_backend -Wall -pedantic -Wshadow -g -D_GLIBCXX_DEBUG
 
 #include "robots.hh"
-#include "run_nn.hh"
+//#include "run_nn.hh"
 
 #include <array>
 
@@ -80,7 +80,8 @@ struct Logger {
     output << game.board().get_stringified_representation()
     << ',' << game.n_safe_teleports_remaining()
     << ',' << game.round()
-    << ',' << int( key ) << std::endl;
+    << ',' << int( key )
+    << ',' << game.board().get_safe_moves() << std::endl;
   }
 
   std::stringstream output;
@@ -185,7 +186,7 @@ int main(){
 	break;
       case Key::R:
 	std::cout << "R" << std::endl;
-	predict_ai( game );
+	//predict_ai( game );
 	break;
       default:
 	break;

@@ -11,6 +11,8 @@
 #include <math.h>
 #include <array>
 
+#include <memory>
+
 using namespace boost;
 using namespace boost::python;
 using namespace boost::python::numpy;
@@ -134,6 +136,47 @@ parse_string(
   return create_data( board_input, local_input, key );
 }
 
+boost::python::tuple
+get_observations( Game const & game ){
+  BoardInput< board_input_size > board_input( game.board() );
+  LocalInput local_input( game.board() );
+  KeyPress key( 1 ); //dummy
+  return create_data( board_input, local_input, key );
+}
+
+struct GamePtr {
+  GamePtr(){
+    game_ = std::make_shared< Game >();
+  }
+  
+  GameOverBool
+  cascade(){
+    return game_->old_cascade();
+  }  
+  
+  GameOverBool
+  move_human( int const dx, int const dy ){
+    return game_->move_human( dx, dy );
+  }
+  GameOverBool teleport(){ return game_->teleport(); }
+  
+  int n_safe_teleports_remaining(){ return game_->n_safe_teleports_remaining(); }
+  int round(){ return game_->round(); }
+  long int score(){ return game_->score(); }
+  void reset(){ game_->reset(); }
+
+  boost::python::tuple
+  get_observations(){
+    BoardInput< board_input_size > board_input( game_->board() );
+    LocalInput local_input( game_->board() );
+    KeyPress key( 1 ); //dummy
+    return create_data( board_input, local_input, key );
+  }
+
+  
+  std::shared_ptr< Game > game_;
+};
+
 BOOST_PYTHON_MODULE( model_for_nn )
 {
   using namespace boost::python;
@@ -142,16 +185,29 @@ BOOST_PYTHON_MODULE( model_for_nn )
 
   def( "parse_string", parse_string );
   def( "sanity_check_values", sanity_check_values );
+  def( "get_observations", get_observations );
 
   class_<Board>("Board")
     .def("get_stringified_representation", &Board::get_stringified_representation )
     .def("load_from_stringified_representation", &Board::load_from_stringified_representation );
 
+  class_<GamePtr>("GamePtr")
+    .def( "fast_cascade", &GamePtr::cascade )
+    .def( "get_observations", &GamePtr::get_observations )
+    .def( "move_human", &GamePtr::move_human )
+    .def( "teleport", &GamePtr::teleport )
+    .def( "n_safe_teleports_remaining", &GamePtr::n_safe_teleports_remaining )
+    .def( "round", &GamePtr::round )
+    .def( "score", &GamePtr::score )
+    .def( "reset", &GamePtr::reset );
+  
   class_<Game>("Game")
-    .def( "fast_cascade", &Game::cascade )
+    .def( "fast_cascade", &Game::old_cascade )
     .def( "move_human", &Game::move_human )
     .def( "teleport", &Game::teleport )
     .def( "n_safe_teleports_remaining", &Game::n_safe_teleports_remaining )
     .def( "round", &Game::round )
+    .def( "score", &Game::score )
+    .def( "reset", &Game::reset )
     .def( "load_from_stringified_representation", &Game::load_from_stringified_representation );
 }

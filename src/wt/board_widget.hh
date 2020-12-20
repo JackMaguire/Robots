@@ -6,6 +6,7 @@
 #include <Wt/WPainter.h>
 #include <Wt/WInteractWidget.h>
 #include <Wt/WMessageBox.h>
+#include <Wt/WApplication.h>
 
 #include "robots.hh"
 #include "sidebar.hh"
@@ -16,14 +17,21 @@
 
 class BoardWidget : public Wt::WPaintedWidget {//, Wt::WInteractWidget {
 public:
-  BoardWidget( ScoreWidget * sidebar ):
-    sidebar_(sidebar)
+  BoardWidget(
+	      ScoreWidget * sidebar,
+	      Wt::WApplication * app
+	      ):
+    game_(),
+    sidebar_( sidebar ),
+    app_( app )
   {
     setLayoutSizeAware( true );
     setSelectable( true );
     setCanReceiveFocus( true );
     //resize(200, 60);
     init_listeners();
+
+    cached_board_ = game_.board();
   }
 
   void init_listeners(){
@@ -39,7 +47,12 @@ public:
 
     int const grid_size = calc_grid_size();
     draw_background( painter, grid_size );
-    draw_foreground( game_.board(), painter, grid_size );
+
+    if( display_cached_board_ ) {
+      draw_foreground( cached_board_, painter, grid_size );
+    } else {
+      draw_foreground( game_.board(), painter, grid_size );
+    }
   }
 
   void layoutSizeChanged(int width, int height) override {
@@ -154,13 +167,22 @@ protected:
 
     case( ' ' ):
       handle_move( -1, -1, false, true );
-    break;
-    
+      break;
+
+    case( '?' ):
+      toggle_cached_board();
+      break;
+
     default:
       return;
     }
   }
 
+  void toggle_cached_board(){
+    display_cached_board_ = ! display_cached_board_;
+    update();
+  }
+  
   void display_endgame( std::string const & text ){
     Wt::WMessageBox * const messageBox = addChild(
       Wt::cpp14::make_unique< Wt::WMessageBox >(
@@ -183,15 +205,28 @@ protected:
 
 
   void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
+    if( display_cached_board_ == true ){
+      display_cached_board_ = false;
+      update();
+      return;//Don't make them make a mistake
+    }
+
+    cached_board_ = game_.board();
+    
     bool game_over = false;
     if( wait ){
+      //TODO look into WTimer: https://www.webtoolkit.eu/wt/doc/reference/html/classWt_1_1WTimer.html
+      //This has some good ideas too: https://redmine.webtoolkit.eu/boards/2/topics/14880?r=14884#message-14884
+      
       //TODO
       //This is going to require some hacking.
       //Need to cascade INSIDE the painting function?
       //But maybe that still won't work
       game_over = game_.cascade( [=](){
 	  std::cout << "update!" << std::endl;
+	  //std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	  this->update();
+	  app_->processEvents();
 	} );
     } else if( teleport ){
       game_over = game_.teleport();
@@ -225,4 +260,9 @@ private:
   std::mutex move_mutex_;
 
   ScoreWidget * sidebar_;
+  Wt::WApplication * app_;
+
+  Board cached_board_;
+  bool display_cached_board_;
 };
+

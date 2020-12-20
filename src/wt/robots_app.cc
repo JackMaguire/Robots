@@ -27,7 +27,7 @@ createApplication( Wt::WEnvironment const & env ) {
   ScoreWidget * raw_score = &(*score);
   border->addWidget( std::move( score ),  Wt::LayoutPosition::East );
 
-  border->addWidget( Wt::cpp14::make_unique< BoardWidget >( raw_score ),  Wt::LayoutPosition::Center );
+  border->addWidget( Wt::cpp14::make_unique< BoardWidget >( raw_score, &(*app) ),  Wt::LayoutPosition::Center );
  
   
   //app->root()->addWidget( Wt::cpp14::make_unique< BoardWidget >( ) );

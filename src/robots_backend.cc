@@ -57,7 +57,7 @@ Key {
 
 struct ConsolePiper {
   static void show( Board const & b ){
-    std::cout << "UPDATE " << b.get_stringified_representation() << std::endl;
+    std::cout << "UPDATE " << b.get_stringified_representation() << " " << b.get_safe_moves() << std::endl;
   }
 };
 
@@ -80,8 +80,8 @@ struct Logger {
     output << game.board().get_stringified_representation()
     << ',' << game.n_safe_teleports_remaining()
     << ',' << game.round()
-    << ',' << int( key )
-    << ',' << game.board().get_safe_moves() << std::endl;
+    << ',' << int( key ) << std::endl;
+    // << ',' << game.board().get_safe_moves() << std::endl;
   }
 
   std::stringstream output;

@@ -30,6 +30,7 @@ public class RobotsFrontend {
 	private final Color  fire_color_ = new Color( 200, 10, 10 );
 
 	String board = null;
+	String safes = null;
 
 	public String get_board() {
 	    return board;
@@ -65,11 +66,13 @@ public class RobotsFrontend {
 		for( int a = 0; a < board.length(); ++a ){
 		    char c = board.charAt( a );
 		    boolean draw = true;
+		    boolean human = false;
 		    switch( c ){
 		    case( '1' )://ROBOT
 			g2D.setColor( robot_color_ );
 			break;
 		    case( '2' )://HUMAN
+			human = true;
 			g2D.setColor( human_color_ );
 			break;
 		    case( '3' )://FIRE
@@ -82,6 +85,21 @@ public class RobotsFrontend {
 			final int x = i * BOX_SIZE;
 			final int y = (BOARD_HEIGHT-j - 1) * BOX_SIZE;
 			g2D.fillOval( x, y, BOX_SIZE, BOX_SIZE );
+
+			if( human ){
+			    g2D.setColor( new Color( 0, 0, 0 ) );
+			    int iii = 0;
+			    for( int dx = -1; dx < 2; ++dx ) {
+				for( int dy = -1; dy < 2; ++dy ) {
+				    if( safes.charAt( iii ) == '1' ){
+					final int x2 = (i+dx) * BOX_SIZE;
+					final int y2 = (BOARD_HEIGHT-(j+dy) - 1) * BOX_SIZE;
+					g2D.drawOval( x2-1, y2-1, BOX_SIZE+2, BOX_SIZE+2 );
+				    }
+				    ++iii;
+				}
+			    }
+			}
 		    }
 
 		    ++j;
@@ -98,8 +116,9 @@ public class RobotsFrontend {
 	    drawBackground( g2D );
 	}
 
-	public void updateboard( String newboard ){
+	public void updateboard( String newboard, String newsafes ){
 	    board = newboard;
+	    safes = newsafes;
 	    repaint();
 	    revalidate();
 	}
@@ -127,7 +146,7 @@ public class RobotsFrontend {
 		System.exit( 0 );
 	    } else if( next.startsWith("UPDATE") ){
 		second_to_last = mv.get_board();
-		mv.updateboard( next.split(" ")[1] );
+		mv.updateboard( next.split(" ")[1], next.split(" ")[2] );
 	    } else {
 		System.out.println( next );
 	    }

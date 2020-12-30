@@ -422,7 +422,10 @@ struct NullVisualizer {
 template< typename Visualizer = NullVisualizer, bool go_slow = GO_HUMAN_SPEED >
 class RobotsGame {
 public:
-  RobotsGame(){
+  RobotsGame( int const round = 1, int const tele = 0 ) :
+    round_( round ),
+    n_safe_teleports_remaining_( tele )
+  {
     Visualizer::show( board_ );
   }
 
@@ -445,6 +448,7 @@ public:
 
     if( round_ == MAX_N_ROUNDS ){
       //TODO handle win
+      latest_result_ = MoveResult::YOU_WIN_GAME;
     } else {
       board_.init( ++round_ );
       if( GO_HUMAN_SPEED ){
@@ -477,6 +481,12 @@ public:
 
     //std::cout << "result: " << int( result ) << std::endl;
     return latest_result_ == MoveResult::YOU_LOSE || latest_result_ == MoveResult::YOU_WIN_GAME;
+  }
+
+  GameOverBool
+  cascade(){  
+    auto && nulloper = [](){};
+    return cascade( nulloper );
   }
 
   template< typename T >
@@ -615,8 +625,8 @@ public:
 private:
   Board board_;
 
-  int round_ = 1;
-  int n_safe_teleports_remaining_ = 0;
+  int round_;
+  int n_safe_teleports_remaining_;
 
   long int score_ = 0;
   

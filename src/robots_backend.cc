@@ -119,7 +119,7 @@ int main(){
   newSettings.c_lflag &= (~ICANON & ~ECHO);
   tcsetattr( fileno( stdin ), TCSANOW, &newSettings );    
 
-  RobotsGame< ConsolePiper > game;
+  RobotsGame< ConsolePiper > game( 60, 10 );
 
 #ifdef OUTPUT_TRAINING_DATA_DIR
       Logger logger;

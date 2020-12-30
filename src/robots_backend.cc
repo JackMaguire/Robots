@@ -10,6 +10,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <iostream>
+#include <cstdlib> //rand()
 
 #include <stdlib.h>
 #include <sys/time.h>
@@ -119,7 +120,9 @@ int main(){
   newSettings.c_lflag &= (~ICANON & ~ECHO);
   tcsetattr( fileno( stdin ), TCSANOW, &newSettings );    
 
-  RobotsGame< ConsolePiper > game( 60, 10 );
+  int const starting_level = 10 + (rand() % 50);
+  //int const starting_level = 0;
+  RobotsGame< ConsolePiper, true, 250 > game( starting_level, 10 );
 
 #ifdef OUTPUT_TRAINING_DATA_DIR
       Logger logger;

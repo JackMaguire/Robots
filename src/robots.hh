@@ -3,7 +3,7 @@
 
 #pragma once
 
-#define MUTE
+//#define MUTE
 
 #include <array>
 #include <vector>
@@ -419,13 +419,21 @@ struct NullVisualizer {
   static void show( Board const & ){}
 };
 
-template< typename Visualizer = NullVisualizer, bool go_slow = GO_HUMAN_SPEED >
+template< typename Visualizer = NullVisualizer, bool go_slow = GO_HUMAN_SPEED, int sleepsize = 500 >
 class RobotsGame {
 public:
   RobotsGame( int const round = 1, int const tele = 0 ) :
     round_( round ),
     n_safe_teleports_remaining_( tele )
   {
+    board_.init( round_ );
+
+    long int expected_score = 0;
+    for( int r = 1; r <= round_; ++r ){
+      expected_score += r * 10;
+    }
+    score_ = expected_score;
+
     Visualizer::show( board_ );
   }
 
@@ -447,8 +455,10 @@ public:
 #endif
 
     if( round_ == MAX_N_ROUNDS ){
-      //TODO handle win
       latest_result_ = MoveResult::YOU_WIN_GAME;
+#ifndef MUTE
+      std::cout << "YOU WIN!" << std::endl;
+#endif
     } else {
       board_.init( ++round_ );
       if( GO_HUMAN_SPEED ){
@@ -468,7 +478,7 @@ public:
       latest_result_ = board_.move_robots_1_step();
       Visualizer::show( board_ );
       if( go_slow ){
-	std::this_thread::sleep_for (std::chrono::milliseconds(500));
+	std::this_thread::sleep_for (std::chrono::milliseconds(sleepsize));
       }
     }
 
@@ -485,8 +495,8 @@ public:
 
   GameOverBool
   cascade(){  
-    auto && nulloper = [](){};
-    return cascade( nulloper );
+    auto && show = [=](){ Visualizer::show( board_ ); };
+    return cascade( show );
   }
 
   template< typename T >
@@ -499,7 +509,7 @@ public:
       latest_result_ = board_.move_robots_1_step();
       updater();
       if( go_slow ){
-	std::this_thread::sleep_for (std::chrono::milliseconds(500));
+	std::this_thread::sleep_for (std::chrono::milliseconds(sleepsize));
       }
     }
 

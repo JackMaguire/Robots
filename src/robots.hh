@@ -363,11 +363,15 @@ public:
     for( pos.x = 0; pos.x < WIDTH; ++pos.x ){
       for( pos.y = 0; pos.y < HEIGHT; ++pos.y ){
 	char const val = str[ index ]; ++index;
-	Occupant const state = Occupant(int(val));
+	Occupant const state = Occupant(std::stoi(std::string(1,val)));
 	cell( pos ) = state;
+
+	//std::cout << "state: " << int(state) << std::endl;
+	//std::cout << "state: " << int(state) << std::endl;
 
 	switch( state ){
 	case( Occupant::ROBOT ):
+	  //std::cout << "LOADING ROBOT" << std::endl;
 	  robot_positions_.push_back( pos );
 	  break;
 	case( Occupant::HUMAN ):
@@ -426,7 +430,11 @@ forcast_move( Board const & board, int const dx, int const dy ){
   ForecastResults results;
   Board copy = board;
 
+  //std::cout << board.n_robots() << " " << copy.n_robots() << std::endl;
+
   MoveResult move_result = copy.move_human( dx, dy );
+  //std::cout << "    " << int( move_result ) << std::endl;
+
   if( move_result == MoveResult::YOU_LOSE ) return results;  
 
   results.legal = true;

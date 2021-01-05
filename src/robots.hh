@@ -116,76 +116,12 @@ public:
   find_open_space( bool const allow_robot_movement = true );
 
   bool
-  cell_is_safe_for_teleport( Position const p ){
-    for( int x = p.x - 1; x <= p.x + 1; ++x ){
-      if( x < 0 || x >= WIDTH) continue;
-      for( int y = p.y - 1; y <= p.y + 1; ++y ){
-	if( y < 0 || y >= HEIGHT) continue;
-	if( cell( Position({ x, y }) ) != Occupant::EMPTY ) return false;
-      }
-    }
-
-    return cell( p ) == Occupant::EMPTY;
-  }
+  cell_is_safe_for_teleport( Position const p ) const;
 
   MoveResult
-  teleport( bool const safe ){
-    cell( human_position_ ) = Occupant::EMPTY;
+  teleport( bool const safe );
 
-    if( safe ){
-      human_position_ = find_open_space();
-    } else {
-      human_position_.x = random_x();
-      human_position_.y = random_y();
-    }
-
-    cell( human_position_ ) = Occupant::HUMAN;
-    return move_robots_1_step( safe );
-  }
-
-  void init( int const round ){
-    //RESET
-    clear_board();
-
-    //HUMAN
-    human_position_ = STARTING_POSITION;
-    cell( human_position_ ) = Occupant::HUMAN;
-    
-    //ROBOTS
-    robot_positions_.resize( nrobots_per_round( round ) );
-    if( robot_positions_.size() < 100 ){
-      //Use different algorithm if the robot count is << the number of cells
-      for( Position & robot : robot_positions_ ){
-	do {
-	  robot.x = random_x();
-	  robot.y = random_y();
-	} while( cell( robot ) != Occupant::EMPTY );
-
-	cell( robot ) = Occupant::ROBOT;	
-      }
-    } else {
-      //This can be very constexpr
-      std::vector< Position > empty_positions;
-      empty_positions.reserve( (HEIGHT*WIDTH) - 1 );
-      for( int w = 0; w < WIDTH; ++w ){
-	for( int h = 0; h < HEIGHT; ++h ){
-	  Position const p = { w, h };
-	  if( p != STARTING_POSITION ){
-	    empty_positions.emplace_back( p );
-	  }
-	}
-      }
-
-      std::random_device rd;
-      std::mt19937 g( rd() );
-      std::shuffle( empty_positions.begin(), empty_positions.end(), g );
-
-      for( int i = 0; i < robot_positions_.size(); ++i ){
-	robot_positions_[ i ] = empty_positions[ i ];
-	cell( robot_positions_[ i ] ) = Occupant::ROBOT;
-      }
-    }
-  }
+  void init( int const round );
 
   Occupant & cell( Position const & p ){
     return cells_[ p.x ][ p.y ];
@@ -196,162 +132,26 @@ public:
   }
 
   MoveResult
-  move_robots_1_step(
-    bool const human_is_safe = false
-  ){
-    //Clear robots from map
-    for( int w = 0; w < WIDTH; ++w ){
-      for( int h = 0; h < HEIGHT; ++h ){
-	if( cells_[ w ][ h ] == Occupant::ROBOT ){
-	  cells_[ w ][ h ] = Occupant::EMPTY;
-	}
-      }
-    }
-
-    //Some robots will be deleted if they run into each other or into fire
-    std::set< int > robots_to_delete;
- 
-    //keep temporary track of robots just in case they clash
-    //elements are indices in robot_positions_
-    std::array< std::array< int, HEIGHT >, WIDTH > robot_indices;
-
-    for( int r = 0; r < robot_positions_.size(); ++r ){
-      Position & pos = robot_positions_[ r ];
-
-      if( human_position_.x < pos.x ) pos.x -= 1;
-      else if( human_position_.x > pos.x ) pos.x += 1;
-
-      if( human_position_.y < pos.y ) pos.y -= 1;
-      else if( human_position_.y > pos.y ) pos.y += 1;
-
-      if( human_is_safe && pos == human_position_ ){
-	//This is rare, but just have the robot take one step to the left or right
-	if( pos.x == 0 ) ++pos.x;//Don't go out of bounds
-	else --pos.x;
-      }
-
-      switch( cell( pos ) ){
-      case Occupant::EMPTY:
-	robot_indices[ pos.x ][ pos.y ] = r;
-	cell( pos ) = Occupant::ROBOT;
-	break;
-      case Occupant::ROBOT:
-	{
-	  int const other_robot_ind = robot_indices[ pos.x ][ pos.y ];
-	  robots_to_delete.insert( other_robot_ind );
-	}
-	robots_to_delete.insert( r );
-	cell( pos ) = Occupant::FIRE;
-	break;
-      case Occupant::HUMAN:
-	return MoveResult::YOU_LOSE;
-	//break;
-      case Occupant::FIRE:
-	robots_to_delete.insert( r );
-	break;
-      }
-    }// for int r
-
-    for( auto iter = robots_to_delete.rbegin(), end = robots_to_delete.rend();
-	 iter != end; ++iter ){
-      robot_positions_.erase( robot_positions_.begin() + (*iter) );
-    }
-
-    if( robot_positions_.size() == 0 ){
-      return MoveResult::YOU_WIN_ROUND;
-    }
-
-    return MoveResult::CONTINUE;
-  } //move_robots_one_step
+  move_robots_1_step( bool const human_is_safe = false );
 
   int n_robots() const {
     return robot_positions_.size();
   }
 
   MoveResult
-  move_human( int const dx, int const dy ) {
-    cell( human_position_ ) = Occupant::EMPTY;
-
-    human_position_.x += dx;
-    if( human_position_.x < 0 ) human_position_.x = 0;
-    if( human_position_.x >= WIDTH ) human_position_.x -= 1;
-
-    human_position_.y += dy;
-    if( human_position_.y < 0 ) human_position_.y = 0;
-    if( human_position_.y >= HEIGHT ) human_position_.y -= 1;
-
-    if( cell( human_position_ ) == Occupant::FIRE ) return MoveResult::YOU_LOSE;
-    if( cell( human_position_ ) == Occupant::ROBOT ) return MoveResult::YOU_LOSE;
-
-    cell( human_position_ ) = Occupant::HUMAN;
-
-    return move_robots_1_step();
-  }
+  move_human( int const dx, int const dy );
 
   bool
-  move_is_cascade_safe( int const dx, int const dy ) const {
-    Board copy = (*this);
-    MoveResult result = copy.move_human( dx, dy );
-    while ( result == MoveResult::CONTINUE ){
-      result = copy.move_human( 0, 0 );
-    }
-    return result != MoveResult::YOU_LOSE;
-  }
+  move_is_cascade_safe( int const dx, int const dy ) const;
 
   std::string
-  get_stringified_representation() const {
-    std::stringstream ss;
-    for( std::array< Occupant, HEIGHT > const & arr : cells_ ){
-      for( Occupant const & o : arr ){
-	ss << int( o );
-      }
-    }
-    return ss.str();
-  }
+  get_stringified_representation() const;
 
   void
-  load_from_stringified_representation( std::string const & str ) {
-    robot_positions_.clear();
-
-    int index = 0;
-    Position pos({0,0});
-    for( pos.x = 0; pos.x < WIDTH; ++pos.x ){
-      for( pos.y = 0; pos.y < HEIGHT; ++pos.y ){
-	char const val = str[ index ]; ++index;
-	Occupant const state = Occupant(std::stoi(std::string(1,val)));
-	cell( pos ) = state;
-
-	//std::cout << "state: " << int(state) << std::endl;
-	//std::cout << "state: " << int(state) << std::endl;
-
-	switch( state ){
-	case( Occupant::ROBOT ):
-	  //std::cout << "LOADING ROBOT" << std::endl;
-	  robot_positions_.push_back( pos );
-	  break;
-	case( Occupant::HUMAN ):
-	  human_position_ = pos;
-	  break;
-	case( Occupant::EMPTY ):
-	case( Occupant::FIRE ):
-	  break;
-	}
-      }//y
-    }//x
-  }
+  load_from_stringified_representation( std::string const & str ) const;
 
   std::string
-  get_safe_moves() const {
-    std::stringstream ss;
-    for( int dx = -1; dx < 2; ++dx )
-      for( int dy = -1; dy < 2; ++dy )
-	if( move_is_cascade_safe( dx, dy ) ){
-	  ss << "1";
-	} else {
-	  ss << "0";
-	}
-    return ss.str();
-  }
+  get_safe_moves() const;
 
   Position const & human_position() const {
     return human_position_;
@@ -710,6 +510,233 @@ Board::find_open_space( bool const allow_robot_movement ){
     return empty_positions[ 0 ];
     //TODO Just pick random index instead of shuffling
   }
+}
+
+bool
+Board::cell_is_safe_for_teleport( Position const p ) const {
+  for( int x = p.x - 1; x <= p.x + 1; ++x ){
+    if( x < 0 || x >= WIDTH) continue;
+    for( int y = p.y - 1; y <= p.y + 1; ++y ){
+      if( y < 0 || y >= HEIGHT) continue;
+      if( cell( Position({ x, y }) ) != Occupant::EMPTY ) return false;
+    }
+  }
+
+  return cell( p ) == Occupant::EMPTY;
+}
+
+MoveResult
+Board::teleport( bool const safe ){
+  cell( human_position_ ) = Occupant::EMPTY;
+
+  if( safe ){
+    human_position_ = find_open_space();
+  } else {
+    human_position_.x = random_x();
+    human_position_.y = random_y();
+  }
+
+  cell( human_position_ ) = Occupant::HUMAN;
+  return move_robots_1_step( safe );
+}
+
+void
+Board::init( int const round ){
+  //RESET
+  clear_board();
+
+  //HUMAN
+  human_position_ = STARTING_POSITION;
+  cell( human_position_ ) = Occupant::HUMAN;
+    
+  //ROBOTS
+  robot_positions_.resize( nrobots_per_round( round ) );
+  if( robot_positions_.size() < 100 ){
+    //Use different algorithm if the robot count is << the number of cells
+    for( Position & robot : robot_positions_ ){
+      do {
+	robot.x = random_x();
+	robot.y = random_y();
+      } while( cell( robot ) != Occupant::EMPTY );
+
+      cell( robot ) = Occupant::ROBOT;	
+    }
+  } else {
+    //This can be very constexpr
+    std::vector< Position > empty_positions;
+    empty_positions.reserve( (HEIGHT*WIDTH) - 1 );
+    for( int w = 0; w < WIDTH; ++w ){
+      for( int h = 0; h < HEIGHT; ++h ){
+	Position const p = { w, h };
+	if( p != STARTING_POSITION ){
+	  empty_positions.emplace_back( p );
+	}
+      }
+    }
+
+    std::random_device rd;
+    std::mt19937 g( rd() );
+    std::shuffle( empty_positions.begin(), empty_positions.end(), g );
+
+    for( int i = 0; i < robot_positions_.size(); ++i ){
+      robot_positions_[ i ] = empty_positions[ i ];
+      cell( robot_positions_[ i ] ) = Occupant::ROBOT;
+    }
+  }
+}
+
+MoveResult
+Board::move_robots_1_step(
+  bool const human_is_safe
+){
+  //Clear robots from map
+  for( int w = 0; w < WIDTH; ++w ){
+    for( int h = 0; h < HEIGHT; ++h ){
+      if( cells_[ w ][ h ] == Occupant::ROBOT ){
+	cells_[ w ][ h ] = Occupant::EMPTY;
+      }
+    }
+  }
+
+  //Some robots will be deleted if they run into each other or into fire
+  std::set< int > robots_to_delete;
+ 
+  //keep temporary track of robots just in case they clash
+  //elements are indices in robot_positions_
+  std::array< std::array< int, HEIGHT >, WIDTH > robot_indices;
+
+  for( int r = 0; r < robot_positions_.size(); ++r ){
+    Position & pos = robot_positions_[ r ];
+
+    if( human_position_.x < pos.x ) pos.x -= 1;
+    else if( human_position_.x > pos.x ) pos.x += 1;
+
+    if( human_position_.y < pos.y ) pos.y -= 1;
+    else if( human_position_.y > pos.y ) pos.y += 1;
+
+    if( human_is_safe && pos == human_position_ ){
+      //This is rare, but just have the robot take one step to the left or right
+      if( pos.x == 0 ) ++pos.x;//Don't go out of bounds
+      else --pos.x;
+    }
+
+    switch( cell( pos ) ){
+    case Occupant::EMPTY:
+      robot_indices[ pos.x ][ pos.y ] = r;
+      cell( pos ) = Occupant::ROBOT;
+      break;
+    case Occupant::ROBOT:
+      {
+	int const other_robot_ind = robot_indices[ pos.x ][ pos.y ];
+	robots_to_delete.insert( other_robot_ind );
+      }
+      robots_to_delete.insert( r );
+      cell( pos ) = Occupant::FIRE;
+      break;
+    case Occupant::HUMAN:
+      return MoveResult::YOU_LOSE;
+      //break;
+    case Occupant::FIRE:
+      robots_to_delete.insert( r );
+      break;
+    }
+  }// for int r
+
+  for( auto iter = robots_to_delete.rbegin(), end = robots_to_delete.rend();
+       iter != end; ++iter ){
+    robot_positions_.erase( robot_positions_.begin() + (*iter) );
+  }
+
+  if( robot_positions_.size() == 0 ){
+    return MoveResult::YOU_WIN_ROUND;
+  }
+
+  return MoveResult::CONTINUE;
+} //move_robots_one_step
+
+MoveResult
+Board::move_human( int const dx, int const dy ) {
+  cell( human_position_ ) = Occupant::EMPTY;
+
+  human_position_.x += dx;
+  if( human_position_.x < 0 ) human_position_.x = 0;
+  if( human_position_.x >= WIDTH ) human_position_.x -= 1;
+
+  human_position_.y += dy;
+  if( human_position_.y < 0 ) human_position_.y = 0;
+  if( human_position_.y >= HEIGHT ) human_position_.y -= 1;
+
+  if( cell( human_position_ ) == Occupant::FIRE ) return MoveResult::YOU_LOSE;
+  if( cell( human_position_ ) == Occupant::ROBOT ) return MoveResult::YOU_LOSE;
+
+  cell( human_position_ ) = Occupant::HUMAN;
+
+  return move_robots_1_step();
+}
+
+bool
+Board::move_is_cascade_safe( int const dx, int const dy ) const {
+  Board copy = (*this);
+  MoveResult result = copy.move_human( dx, dy );
+  while ( result == MoveResult::CONTINUE ){
+    result = copy.move_human( 0, 0 );
+  }
+  return result != MoveResult::YOU_LOSE;
+}
+
+std::string
+Board::get_stringified_representation() const {
+  std::stringstream ss;
+  for( std::array< Occupant, HEIGHT > const & arr : cells_ ){
+    for( Occupant const & o : arr ){
+      ss << int( o );
+    }
+  }
+  return ss.str();
+}
+
+void
+Board::load_from_stringified_representation( std::string const & str ) {
+  robot_positions_.clear();
+
+  int index = 0;
+  Position pos({0,0});
+  for( pos.x = 0; pos.x < WIDTH; ++pos.x ){
+    for( pos.y = 0; pos.y < HEIGHT; ++pos.y ){
+      char const val = str[ index ]; ++index;
+      Occupant const state = Occupant(std::stoi(std::string(1,val)));
+      cell( pos ) = state;
+
+      //std::cout << "state: " << int(state) << std::endl;
+      //std::cout << "state: " << int(state) << std::endl;
+
+      switch( state ){
+      case( Occupant::ROBOT ):
+	//std::cout << "LOADING ROBOT" << std::endl;
+	robot_positions_.push_back( pos );
+	break;
+      case( Occupant::HUMAN ):
+	human_position_ = pos;
+	break;
+      case( Occupant::EMPTY ):
+      case( Occupant::FIRE ):
+	break;
+      }
+    }//y
+  }//x
+}
+
+std::string
+Board::get_safe_moves() const {
+  std::stringstream ss;
+  for( int dx = -1; dx < 2; ++dx )
+    for( int dy = -1; dy < 2; ++dy )
+      if( move_is_cascade_safe( dx, dy ) ){
+	ss << "1";
+      } else {
+	ss << "0";
+      }
+  return ss.str();
 }
 
 

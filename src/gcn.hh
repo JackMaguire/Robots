@@ -81,21 +81,6 @@ struct Options {
   int N;
 };
 
-constexpr F = 1; // TODO
-constexpr S = 1; // TODO
-
-// X: (N,F)
-using Xvec = std::vector< std::array< float, F > >;
-
-// A: (N,N)
-using Avec = std::vector< std::vector< float > >;
-
-// E: (N,N,S)
-using Evec = std::vector< std::vector< std::array< float, S > > >;
-
-// O: (9)
-using Ovec = std::array< float, 9 >;
-
 struct NodeCandidate {
   NodeCandidate( int x, int y, Occupant o, Position const & human_position ){
     pos.x = x;
@@ -163,9 +148,11 @@ get_top_candidates( Board const & board, Options const & options ){
       case Occupant::HUMAN:
       case Occupant::OOB:
 	assert( false );
+	break;
       case Occupant::ROBOT:
       case Occupant::FIRE:
 	all.emplace_back( p, board.cell( p ), human_position );
+	break;
       }
     }
   }
@@ -185,12 +172,96 @@ get_top_candidates( Board const & board, Options const & options ){
   return all;
 }
 
+using Forecasts = std::array< std::array< ForecastResults, 3 >, 3 >;
+
+constexpr F = 3;  // TODO
+constexpr Fx = 2; // TODO
+constexpr S = 1;  // TODO
+
+// X: (N,F)
+using Xvec = std::vector< std::array< float, F > >;
+
+// X: (N,Fx)
+using X2vec = std::vector< std::array< float, Fx > >;
+
+// A: (N,N)
+using Avec = std::vector< std::vector< float > >;
+
+// E: (N,N,S)
+using Evec = std::vector< std::vector< std::array< float, S > > >;
+
+// O: (9)
+using Ovec = std::array< float, 9 >;
+
 struct Data {
   Xvec X;
+  X2vec X2;
   Avec A;
   Evec E;
   Ovec out;
 };
+
+std::array< float, F >
+calcF( unsigned int const i, NodeCandidate const & c, Forecasts const & forecasts ){
+  std::array< float, F > values; //zero initialized
+  switch( c.occ ) {
+    case Occupant::EMPTY:
+      values[ 0 ] = 0;
+      values[ 1 ] = 0;
+      break;
+    case Occupant::ROBOT:
+      values[ 0 ] = 0;
+      values[ 1 ] = 1;
+      break;
+    case Occupant::HUMAN:
+      values[ 0 ] = 1;
+      values[ 1 ] = 0;
+      break;
+    case Occupant::FIRE:
+      values[ 0 ] = 0;
+      values[ 1 ] = -1;
+      break;
+    case Occupant::OOB:
+      values[ 0 ] = -1;
+      values[ 1 ] = 0;
+      break;
+  }
+
+  //[2]: distance from human
+  if( c.occ == Occupant::HUMAN ){
+    values[ 2 ] = -3.0;
+  } else {
+    values[ 2 ] = log( c.distance );
+  }
+
+  return values;
+}
+
+std::array< float, Fx >
+calcFx( unsigned int const i, NodeCandidate const & c, Forecasts const & forecasts ){
+  std::array< float, Fx > values; //zero initialized
+
+  if( c.distance == 0 ){
+    //human
+    values[ 0 ] = 0;
+    values[ 1 ] = ( total_n_robots > 0 ? log( total_n_robots ) : -1.0 );
+    values[ 2 ] = legal;
+  } else if( c.distance == 1.0 ) {
+    // cardinal
+    // TODO assert cardinal
+    values[ 0 ] = 1.0;
+    values[ 1 ] = ( n_robots > 0 ? log( n_robots ) : -1.0 );
+    values[ 2 ] = legal;
+  } else {
+    // diagonal
+    // TODO assert diagonal
+    values[ 0 ] = -1.0;
+    values[ 1 ] = ( n_robots > 0 ? log( n_robots ) : -1.0 );
+    values[ 2 ] = legal;
+  }
+
+  return values;
+}
 
 
 Data
@@ -250,6 +321,10 @@ make_data( std::string const & line, Options const & options ){
   for( unsigned int i = 0; i < all_elements.size(); ++i ){
     //X
     data.Xvec[ i ] = calcF( i, all_elements[ i ], forecasts );
+
+    if( i < 9 ){
+      data.X2vec[ i ] = calcFx( i, all_elements[ i ], forecasts );
+    }
 
     for( unsigned int j = i+1; j < all_elements.size(); ++j ){
       bool const has_e = has_edge( all_elements, i, j );

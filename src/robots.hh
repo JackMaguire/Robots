@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
+#include <math.h> //sqrt
 
 using GameOverBool = bool;
 
@@ -35,7 +36,8 @@ enum class Occupant
  EMPTY = 0,
  ROBOT,
  HUMAN,
- FIRE
+ FIRE,
+ OOB
 };
 
 enum class MoveResult
@@ -76,6 +78,11 @@ struct Position {
     return p;
   }
 
+  float distance( Position const & o ) const {
+    Position diff = (*this) - o;
+    return sqrt( diff.x*diff.x + diff.y*diff.y );
+  }
+
 };
 
 namespace {
@@ -102,63 +109,11 @@ public:
     init( 1 );
   }
 
-  void clear_board(){
-    for( std::array< Occupant, HEIGHT > & arr : cells_ ){
-      for( Occupant & o : arr ){
-	o = Occupant::EMPTY;
-      }
-    }
-  }
+  void clear_board();
 
+  //should this be const?
   Position
-  find_open_space( bool const allow_robot_movement = true ){
-    if( robot_positions_.size() < 100 ){
-      Position openp;
-      do {
-	openp.x = random_x();
-	openp.y = random_y();
-      } while( cell( openp ) != Occupant::EMPTY );
-      return openp;
-    } else {
-      //This can be very constexpr
-      std::vector< Position > empty_positions;
-      empty_positions.reserve( (HEIGHT*WIDTH) - 1 - robot_positions_.size() );
-      for( int w = 0; w < WIDTH; ++w ){
-	for( int h = 0; h < HEIGHT; ++h ){
-	  Position const p = { w, h };
-	  if( allow_robot_movement ){
-	    if( cell_is_safe_for_teleport( p ) ){
-	      empty_positions.emplace_back( p );
-	    }
-	  } else {
-	    if( cell( p ) == Occupant::EMPTY ){
-	      empty_positions.emplace_back( p );
-	    }
-	  }
-	}
-      }
-
-      if( empty_positions.empty() ){
-	if( allow_robot_movement ){
-#ifndef MUTE
-	  std::cout << "No Safe Positions! Trying Fallback Plan" << std::endl;
-#endif
-	  return find_open_space( false );
-	} else {
-#ifndef MUTE
-	  std::cout << "No safe positions even in fallback plan!!" << std::endl;
-#endif
-	  //This is very unexpected, don't know how to handle it
-	}
-      }
-
-      std::random_device rd;
-      std::mt19937 g( rd() );
-      std::shuffle( empty_positions.begin(), empty_positions.end(), g );
-      return empty_positions[ 0 ];
-      //TODO Just pick random index instead of shuffling
-    }
-  }
+  find_open_space( bool const allow_robot_movement = true );
 
   bool
   cell_is_safe_for_teleport( Position const p ){
@@ -697,6 +652,65 @@ private:
   
   MoveResult latest_result_ = MoveResult::CONTINUE;
 };
+
+
+void Board::clear_board(){
+  for( std::array< Occupant, HEIGHT > & arr : cells_ ){
+    for( Occupant & o : arr ){
+      o = Occupant::EMPTY;
+    }
+  }
+}
+
+Position
+Board::find_open_space( bool const allow_robot_movement ){
+  if( robot_positions_.size() < 100 ){
+    Position openp;
+    do {
+      openp.x = random_x();
+      openp.y = random_y();
+    } while( cell( openp ) != Occupant::EMPTY );
+    return openp;
+  } else {
+    //This can be very constexpr
+    std::vector< Position > empty_positions;
+    empty_positions.reserve( (HEIGHT*WIDTH) - 1 - robot_positions_.size() );
+    for( int w = 0; w < WIDTH; ++w ){
+      for( int h = 0; h < HEIGHT; ++h ){
+	Position const p = { w, h };
+	if( allow_robot_movement ){
+	  if( cell_is_safe_for_teleport( p ) ){
+	    empty_positions.emplace_back( p );
+	  }
+	} else {
+	  if( cell( p ) == Occupant::EMPTY ){
+	    empty_positions.emplace_back( p );
+	  }
+	}
+      }
+    }
+
+    if( empty_positions.empty() ){
+      if( allow_robot_movement ){
+#ifndef MUTE
+	std::cout << "No Safe Positions! Trying Fallback Plan" << std::endl;
+#endif
+	return find_open_space( false );
+      } else {
+#ifndef MUTE
+	std::cout << "No safe positions even in fallback plan!!" << std::endl;
+#endif
+	//This is very unexpected, don't know how to handle it
+      }
+    }
+
+    std::random_device rd;
+    std::mt19937 g( rd() );
+    std::shuffle( empty_positions.begin(), empty_positions.end(), g );
+    return empty_positions[ 0 ];
+    //TODO Just pick random index instead of shuffling
+  }
+}
 
 
 //int main(){};

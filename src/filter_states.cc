@@ -114,9 +114,12 @@ int main(){
       forcast_all_moves( b );
 
     int n_options = 0;
-    for( auto const & i : forecasts )
-      for( auto const & j : i )
+    for( auto const & i : forecasts ){
+      for( auto const & j : i ){
 	if( j.legal ) ++n_options;
+	if( j.cascade_safe ) continue;
+      }
+    }
 
     //std::cout << n_options << std::endl;
     if( n_options < 2 ) continue;

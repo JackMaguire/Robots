@@ -50,9 +50,7 @@ enum class MoveResult
 
 
 struct Position {
-
-  // auto operator<=>(const Position&) const = default;
-
+  
   bool operator==( Position const & o ) const {
     return x == o.x && y == o.y;
   }

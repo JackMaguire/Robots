@@ -131,25 +131,25 @@ get_top_candidates( Board const & board, Options const & options ){
 
   //Do the 4 OOB:
   {
-    Position const p( -1, human_position.y );
+    Position const p({ -1, human_position.y });
     if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
       all.emplace_back( p, Occupant::OOB, human_position ); 
     }
   }
   {
-    Position const p( WIDTH, human_position.y );
+    Position const p({ WIDTH, human_position.y });
     if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
       all.emplace_back( p, Occupant::OOB, human_position ); 
     }
   }
   {
-    Position const p( human_position.x, -1 );
+    Position const p({ human_position.x, -1 });
     if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
       all.emplace_back( p, Occupant::OOB, human_position ); 
     }
   }
   {
-    Position const p( human_position.x, HEIGHT );
+    Position const p({ human_position.x, HEIGHT });
     if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
       all.emplace_back( p, Occupant::OOB, human_position ); 
     }

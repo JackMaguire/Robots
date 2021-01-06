@@ -79,7 +79,7 @@ parse_int( int const command ){
 }
 
 struct Options {
-  int N;
+  unsigned int N;
 };
 
 struct NodeCandidate {
@@ -166,7 +166,7 @@ get_top_candidates( Board const & board, Options const & options ){
       return a.distance < b.distance; 
     });
 
-  int const max_size = options.N - 9;
+  unsigned int const max_size = options.N - 9;
   if( all.size() > max_size ){
     all.resize( max_size );
   }
@@ -204,7 +204,7 @@ struct Data {
 };
 
 std::array< float, F >
-calcF( unsigned int const i, NodeCandidate const & c, Forecasts const & forecasts ){
+calcF( NodeCandidate const & c ){
   std::array< float, F > values; //zero initialized
   switch( c.occ ) {
     case Occupant::EMPTY:
@@ -278,7 +278,6 @@ n_robots_in_line( Board const & board ) {
 std::array< float, Fx >
 calcFx(
   unsigned int const i,
-  NodeCandidate const & c,
   Forecasts const & forecasts,
   Board const & board,
   int const n_safe_tele
@@ -526,21 +525,21 @@ make_data( std::string const & line, Options const & options ){
     [&](){
       std::vector< NodeCandidate > local_candidates = get_local_candidates( b );
       std::vector< NodeCandidate > far_candidates = get_top_candidates( b, options );
-      std::vector< NodeCandidate > all_elements;
-      all_elements.reserve( options.N );
-      all_elements.insert( all_elements.end(),
+      std::vector< NodeCandidate > all_elements_i;
+      all_elements_i.reserve( options.N );
+      all_elements_i.insert( all_elements_i.end(),
 	local_candidates.begin(), local_candidates.end() );
-      all_elements.insert( all_elements.end(),
+      all_elements_i.insert( all_elements_i.end(),
 	far_candidates.begin(), far_candidates.end() );
-      return all_elements;
+      return all_elements_i;
     }();
   
   for( unsigned int i = 0; i < all_elements.size(); ++i ){
     //X
-    data.X[ i ] = calcF( i, all_elements[ i ], forecasts );
+    data.X[ i ] = calcF( all_elements[ i ] );
 
     if( i < 9 ){
-      data.X2[ i ] = calcFx( i, all_elements[ i ], forecasts, b, n_safe_tele );
+      data.X2[ i ] = calcFx( i, forecasts, b, n_safe_tele );
       //std::cout << "??? " << data.X2[ i ][ 2 ] << std::endl;
     } else {
       std::fill( data.X2[ i ].begin(), data.X2[ i ].end(), -5 );

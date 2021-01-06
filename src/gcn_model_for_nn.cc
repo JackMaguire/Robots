@@ -13,7 +13,7 @@ namespace np = boost::python::numpy;
 constexpr int board_input_size = 9;
 
 boost::python::tuple
-generate_data_from_str( std::string const str, int const N ){
+generate_data_from_str( std::string const str, unsigned int const N ){
   np::dtype const dtype = np::dtype::get_builtin<float>();
 
   Options const options = { N };

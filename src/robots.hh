@@ -144,6 +144,7 @@ public:
   bool
   move_is_cascade_safe( int const dx, int const dy ) const;
 
+  __attribute__((unused))  
   std::string
   get_stringified_representation() const;
 
@@ -578,7 +579,7 @@ Board::init( int const round ){
     std::mt19937 g( rd() );
     std::shuffle( empty_positions.begin(), empty_positions.end(), g );
 
-    for( int i = 0; i < robot_positions_.size(); ++i ){
+    for( unsigned int i = 0; i < robot_positions_.size(); ++i ){
       robot_positions_[ i ] = empty_positions[ i ];
       cell( robot_positions_[ i ] ) = Occupant::ROBOT;
     }
@@ -605,7 +606,7 @@ Board::move_robots_1_step(
   //elements are indices in robot_positions_
   std::array< std::array< int, HEIGHT >, WIDTH > robot_indices;
 
-  for( int r = 0; r < robot_positions_.size(); ++r ){
+  for( unsigned int r = 0; r < robot_positions_.size(); ++r ){
     Position & pos = robot_positions_[ r ];
 
     if( human_position_.x < pos.x ) pos.x -= 1;
@@ -729,6 +730,7 @@ Board::load_from_stringified_representation( std::string const & str ) {
   }//x
 }
 
+__attribute__((unused))
 std::string
 Board::get_safe_moves() const {
   std::stringstream ss;

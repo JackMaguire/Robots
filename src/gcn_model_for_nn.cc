@@ -10,8 +10,6 @@ using namespace boost::python::numpy;
 namespace p = boost::python;
 namespace np = boost::python::numpy;
 
-constexpr int board_input_size = 9;
-
 boost::python::tuple
 generate_data_from_str( std::string const str, unsigned int const N ){
   np::dtype const dtype = np::dtype::get_builtin<float>();
@@ -73,23 +71,11 @@ generate_data_from_str( std::string const str, unsigned int const N ){
       memcpy( ndarray_data, Edata.data(), sizeof(float)*N*N*S );
     }
 
-    p::tuple const Oshape =
-      p::make_tuple( N );
+    p::tuple const Oshape = p::make_tuple( 9 );
     np::ndarray const O_input_py = np::empty( Oshape, dtype );
-    {
-      std::vector< float > Odata;
-      Odata.reserve( N );
-      for( float const f : d.out )
-	Odata.push_back( f );
-      assert( Odata.size() == 9 );
-    
-      while( Odata.size() < N ){
-	Odata.push_back( 0 );
-      }
-      assert( Odata.size() == N );
-    
+    {        
       float * ndarray_data = reinterpret_cast< float * > ( O_input_py.get_data() );
-      memcpy( ndarray_data, Odata.data(), sizeof(float)*N );
+      memcpy( ndarray_data, d.out.data(), sizeof(float)*9 );
     }
 
     return boost::python::make_tuple( X_input_py, A_input_py, E_input_py, O_input_py );

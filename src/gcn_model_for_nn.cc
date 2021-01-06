@@ -73,7 +73,7 @@ generate_data_from_str( std::string const str, unsigned int const N ){
   }
 
   p::tuple const Oshape =
-    p::make_tuple( N, N );
+    p::make_tuple( N );
   np::ndarray const O_input_py = np::empty( Oshape, dtype );
   {
     std::vector< float > Odata;
@@ -85,6 +85,7 @@ generate_data_from_str( std::string const str, unsigned int const N ){
     while( Odata.size() < N ){
       Odata.push_back( 0 );
     }
+    assert( Odata.size() == N );
     
     float * ndarray_data = reinterpret_cast< float * > ( O_input_py.get_data() );
     memcpy( ndarray_data, Odata.data(), sizeof(float)*N );

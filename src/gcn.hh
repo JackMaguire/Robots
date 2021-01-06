@@ -130,10 +130,30 @@ get_top_candidates( Board const & board, Options const & options ){
   Position const human_position = board.human_position();
 
   //Do the 4 OOB:
-  all.emplace_back( -1, human_position.y,     Occupant::OOB, human_position );
-  all.emplace_back( WIDTH, human_position.y,  Occupant::OOB, human_position );
-  all.emplace_back( human_position.x, -1,     Occupant::OOB, human_position );
-  all.emplace_back( human_position.x, HEIGHT, Occupant::OOB, human_position );
+  {
+    Position const p( -1, human_position.y );
+    if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
+      all.emplace_back( p, Occupant::OOB, human_position ); 
+    }
+  }
+  {
+    Position const p( WIDTH, human_position.y );
+    if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
+      all.emplace_back( p, Occupant::OOB, human_position ); 
+    }
+  }
+  {
+    Position const p( human_position.x, -1 );
+    if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
+      all.emplace_back( p, Occupant::OOB, human_position ); 
+    }
+  }
+  {
+    Position const p( human_position.x, HEIGHT );
+    if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
+      all.emplace_back( p, Occupant::OOB, human_position ); 
+    }
+  }
   
   int nskipped = 0;
   Position p;
@@ -159,7 +179,8 @@ get_top_candidates( Board const & board, Options const & options ){
     }
   }
 
-  assert( nskipped == 9 );
+  assert( nskipped >= 4 );
+  assert( nskipped <= 9 );
 
   std::sort( all.begin(), all.end(), 
     []( NodeCandidate const & a, NodeCandidate const & b ) -> bool { 
@@ -290,7 +311,7 @@ calcFx(
   auto && transform =
     []( int const n_robots ) -> float {
       auto const trans = ( n_robots > 0 ? log( n_robots ) : -1.0 );
-      std::cout << "!!!" << n_robots << " " << trans << std::endl;
+      //std::cout << "!!!" << n_robots << " " << trans << std::endl;
       return trans;
     };
 

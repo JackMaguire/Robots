@@ -542,6 +542,8 @@ make_data( std::string const & line, Options const & options ){
     if( i < 9 ){
       data.X2[ i ] = calcFx( i, all_elements[ i ], forecasts, b, n_safe_tele );
       //std::cout << "??? " << data.X2[ i ][ 2 ] << std::endl;
+    } else {
+      std::fill( data.X2[ i ].begin(), data.X2[ i ].end(), -5 );
     }
 
     for( unsigned int j = i+1; j < all_elements.size(); ++j ){

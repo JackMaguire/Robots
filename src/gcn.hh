@@ -21,6 +21,11 @@
 #include <fcntl.h>
 #include <termios.h>
 
+#include <exception>
+
+struct IllegalMoveException : public std::exception
+{};
+
 constexpr int Q_key = 113;  //
 constexpr int W_key = 119; //capitol is 87
 constexpr int E_key = 101; //
@@ -502,39 +507,39 @@ make_data( std::string const & line, Options const & options ){
   case int( Key::R ):
     assert( false );
   case int( Key::Q ):
-    assert( forecasts[ 0 ][ 2 ].legal );
+    if( forecasts[ 0 ][ 2 ].legal ) throw IllegalMoveException();
     data.out[ 0 ] = 1.0;
     break;
   case int( Key::W ):
-    assert( forecasts[ 1 ][ 2 ].legal );
+    if( forecasts[ 1 ][ 2 ].legal ) throw IllegalMoveException();
     data.out[ 1 ] = 1.0;
     break;
   case int( Key::E ):
-    assert( forecasts[ 2 ][ 2 ].legal );
+    if( forecasts[ 2 ][ 2 ].legal ) throw IllegalMoveException();
     data.out[ 2 ] = 1.0;
     break;
   case int( Key::A ):
-    assert( forecasts[ 0 ][ 1 ].legal );
+    if( forecasts[ 0 ][ 1 ].legal ) throw IllegalMoveException();
     data.out[ 3 ] = 1.0;
     break;
   case int( Key::S ):
-    assert( forecasts[ 1 ][ 1 ].legal );
+    if( forecasts[ 1 ][ 1 ].legal ) throw IllegalMoveException();
     data.out[ 4 ] = 1.0;
     break;
   case int( Key::D ):
-    assert( forecasts[ 2 ][ 1 ].legal );
+    if( forecasts[ 2 ][ 1 ].legal ) throw IllegalMoveException();
     data.out[ 5 ] = 1.0;
     break;
   case int( Key::Z ):
-    assert( forecasts[ 0 ][ 0 ].legal );
+    if( forecasts[ 0 ][ 0 ].legal ) throw IllegalMoveException();
     data.out[ 6 ] = 1.0;
     break;
   case int( Key::X ):
-    assert( forecasts[ 1 ][ 0 ].legal );
+    if( forecasts[ 1 ][ 0 ].legal ) throw IllegalMoveException();
     data.out[ 7 ] = 1.0;
     break;
   case int( Key::C ):
-    assert( forecasts[ 2 ][ 0 ].legal );
+    if( forecasts[ 2 ][ 0 ].legal ) throw IllegalMoveException();
     data.out[ 8 ] = 1.0;
     break;
   default:

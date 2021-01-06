@@ -742,5 +742,4 @@ Board::get_safe_moves() const {
   return ss.str();
 }
 
-
 //int main(){};

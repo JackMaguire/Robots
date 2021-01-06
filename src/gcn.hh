@@ -105,7 +105,7 @@ get_local_candidates( Board const & board ){
   Position const h = board.human_position();
   
   Position p;
-  for( p.y = h.y-1; p.y <= h.y+1; ++p.y ){
+  for( p.y = h.y+1; p.y >= h.y-1; --p.y ){ //QWE ASD ZXC
     for( p.x = h.x-1; p.x <= h.x+1; ++p.x ){
       if( ! board.position_is_in_bounds( p ) ){
 	all.emplace_back( p, Occupant::OOB, h );
@@ -174,9 +174,9 @@ get_top_candidates( Board const & board, Options const & options ){
 
 using Forecasts = std::array< std::array< ForecastResults, 3 >, 3 >;
 
-constexpr int F = 3;  // TODO
-constexpr int Fx = 2; // TODO
-constexpr int S = 1;  // TODO
+constexpr int F = 3;
+constexpr int Fx = 2;
+constexpr int S = 1;
 
 // X: (N,F)
 using Xvec = std::vector< std::array< float, F > >;
@@ -237,27 +237,129 @@ calcF( unsigned int const i, NodeCandidate const & c, Forecasts const & forecast
   return values;
 }
 
+template< int DX, int DY >
+unsigned int
+n_robots_in_corner( Board const & board ) {
+  unsigned int count = 0;
+  Position const h = board.human_position();
+  Position p;
+  for( p.x = h.x + DX; p.x >= 0 && p.x < WIDTH; p.x += DX ){
+    for( p.y = h.y + DY; p.y >= 0 && p.y < HEIGHT; p.y += DY ){
+      if( board.cell( p ) == Occupant::ROBOT ){
+	++count;
+      }
+    }
+  }
+  return count;
+}
+
+template< int DX, int DY >
+unsigned int
+n_robots_in_line( Board const & board ) {
+  unsigned int count = 0;
+  Position const h = board.human_position();
+  Position p;
+  p.x = h.x + DX;
+  p.y = h.y + DY;
+  static_assert( DX == 0 || DY == 0, "MESSAGE" );
+  while( board.position_is_in_bounds( p ) ){
+    if( board.cell( p ) == Occupant::ROBOT ){
+      ++count;
+    }
+    p.x += DX;
+    p.y += DY;
+  }
+  return count;
+}
+
+
 std::array< float, Fx >
-calcFx( unsigned int const i, NodeCandidate const & c, Forecasts const & forecasts ){
+calcFx(
+  unsigned int const i,
+  NodeCandidate const & c,
+  Forecasts const & forecasts,
+  Board const & board,
+  int const n_safe_tele
+){
   std::array< float, Fx > values; //zero initialized
 
-  if( c.distance == 0 ){
-    //human
+  constexpr float CARDINAL = 1.0;
+  constexpr float DIAGONAL = -1.0;
+
+  auto && transform =
+    []( int const n_robots ){
+      return ( n_robots > 0 ? log( n_robots ) : -1.0 );
+    };
+
+  if( i == 0 ){ //Q
+    values[ 0 ] = DIAGONAL;
+    auto const n_robots = n_robots_in_corner< -1, 1 >( board );
+    values[ 1 ] = transform( n_robots );
+    values[ 2 ] = forecasts[ 0 ][ 2 ].legal;
+    return values;
+  }
+
+  if( i == 1 ){ //W
+    values[ 0 ] = CARDINAL;
+    auto const n_robots = n_robots_in_line< 0, 1 >( board );
+    values[ 1 ] = transform( n_robots );
+    values[ 2 ] = forecasts[ 1 ][ 2 ].legal;    
+    return values;
+  }
+
+  if( i == 2 ){ //E
+    values[ 0 ] = DIAGONAL;
+    auto const n_robots = n_robots_in_corner< 1, 1 >( board );
+    values[ 1 ] = transform( n_robots );
+    values[ 2 ] = forecasts[ 2 ][ 2 ].legal;    
+    return values;
+  }
+
+  if( i == 0 ){ //A
+    values[ 0 ] = CARDINAL;
+    auto const n_robots = n_robots_in_line< -1, 0 >( board );
+    values[ 1 ] = transform( n_robots );
+    values[ 2 ] = forecasts[ 0 ][ 1 ].legal;    
+    return values;
+  }
+
+  if( i == 1 ){ //S
     values[ 0 ] = 0;
-    values[ 1 ] = ( total_n_robots > 0 ? log( total_n_robots ) : -1.0 );
-    values[ 2 ] = legal;
-  } else if( c.distance == 1.0 ) {
-    // cardinal
-    // TODO assert cardinal
-    values[ 0 ] = 1.0;
-    values[ 1 ] = ( n_robots > 0 ? log( n_robots ) : -1.0 );
-    values[ 2 ] = legal;
-  } else {
-    // diagonal
-    // TODO assert diagonal
-    values[ 0 ] = -1.0;
-    values[ 1 ] = ( n_robots > 0 ? log( n_robots ) : -1.0 );
-    values[ 2 ] = legal;
+    values[ 1 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
+    values[ 2 ] = forecasts[ 1 ][ 1 ].legal;    
+    return values;
+  }
+
+  if( i == 2 ){ //D
+    values[ 0 ] = CARDINAL;
+    auto const n_robots = n_robots_in_line< 1, 0 >( board );
+    values[ 1 ] = transform( n_robots );
+    values[ 2 ] = forecasts[ 2 ][ 1 ].legal;    
+    return values;
+  }
+
+  if( i == 0 ){ //Z
+    values[ 0 ] = DIAGONAL;
+    auto const n_robots = n_robots_in_corner< -1, -1 >( board );
+    values[ 1 ] = transform( n_robots );
+    values[ 2 ] = forecasts[ 0 ][ 0 ].legal;    
+    return values;
+  }
+
+  if( i == 1 ){ //X
+    values[ 0 ] = CARDINAL;
+    auto const n_robots = n_robots_in_line< 0, -1 >( board );
+    values[ 1 ] = transform( n_robots );
+    values[ 2 ] = forecasts[ 1 ][ 0 ].legal;    
+    return values;
+  }
+
+  if( i == 2 ){ //C
+    values[ 0 ] = DIAGONAL;
+    auto const n_robots = n_robots_in_corner< 1, -1 >( board );
+    values[ 1 ] = transform( n_robots );
+    values[ 2 ] = forecasts[ 2 ][ 0 ].legal;    
+    return values;
   }
 
   return values;
@@ -283,6 +385,16 @@ make_data( std::string const & line, Options const & options ){
     assert( false );
   }
 
+  int const n_safe_tele = std::stoi( tokens[1] );
+
+  Board b;
+  b.load_from_stringified_representation( tokens[0] );
+
+  std::array< std::array< ForecastResults, 3 >, 3 > const forecasts =
+    forcast_all_moves( b );
+
+  Data data;  //TODO init arrays and zero out
+
   int const move = std::stoi( tokens[3] );
   switch( move ){
   case int( Key::NONE ):
@@ -291,15 +403,46 @@ make_data( std::string const & line, Options const & options ){
   case int( Key::DELETE ):
   case int( Key::R ):
     assert( false );
+  case int( Key::Q ):
+    assert( forecasts[ 0 ][ 2 ].legal );
+    data.out[ 0 ] = 1.0;
+    break;
+  case int( Key::W ):
+    assert( forecasts[ 1 ][ 2 ].legal );
+    data.out[ 1 ] = 1.0;
+    break;
+  case int( Key::E ):
+    assert( forecasts[ 2 ][ 2 ].legal );
+    data.out[ 2 ] = 1.0;
+    break;
+  case int( Key::A ):
+    assert( forecasts[ 0 ][ 1 ].legal );
+    data.out[ 3 ] = 1.0;
+    break;
+  case int( Key::S ):
+    assert( forecasts[ 1 ][ 1 ].legal );
+    data.out[ 4 ] = 1.0;
+    break;
+  case int( Key::D ):
+    assert( forecasts[ 2 ][ 1 ].legal );
+    data.out[ 5 ] = 1.0;
+    break;
+  case int( Key::Z ):
+    assert( forecasts[ 0 ][ 0 ].legal );
+    data.out[ 6 ] = 1.0;
+    break;
+  case int( Key::X ):
+    assert( forecasts[ 1 ][ 0 ].legal );
+    data.out[ 7 ] = 1.0;
+    break;
+  case int( Key::C ):
+    assert( forecasts[ 2 ][ 0 ].legal );
+    data.out[ 8 ] = 1.0;
+    break;
   default:
     break;
   }
 
-  Board b;
-  b.load_from_stringified_representation( tokens[0] );
-
-  std::array< std::array< ForecastResults, 3 >, 3 > const forecasts =
-    forcast_all_moves( b );
   
   std::vector< NodeCandidate > const all_elements =
     [&](){
@@ -313,17 +456,13 @@ make_data( std::string const & line, Options const & options ){
 	far_candidates.begin(), far_candidates.end() );
       return all_elements;
     }();
-
-  //TODO init arrays and zero out
-
-  Data data;
   
   for( unsigned int i = 0; i < all_elements.size(); ++i ){
     //X
     data.X[ i ] = calcF( i, all_elements[ i ], forecasts );
 
     if( i < 9 ){
-      data.X2[ i ] = calcFx( i, all_elements[ i ], forecasts );
+      data.X2[ i ] = calcFx( i, all_elements[ i ], forecasts, b, n_safe_tele );
     }
 
     for( unsigned int j = i+1; j < all_elements.size(); ++j ){

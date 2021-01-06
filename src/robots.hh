@@ -148,7 +148,7 @@ public:
   get_stringified_representation() const;
 
   void
-  load_from_stringified_representation( std::string const & str ) const;
+  load_from_stringified_representation( std::string const & str );
 
   std::string
   get_safe_moves() const;
@@ -639,6 +639,8 @@ Board::move_robots_1_step(
     case Occupant::FIRE:
       robots_to_delete.insert( r );
       break;
+    case Occupant::OOB:
+      break;
     }
   }// for int r
 
@@ -720,6 +722,7 @@ Board::load_from_stringified_representation( std::string const & str ) {
 	break;
       case( Occupant::EMPTY ):
       case( Occupant::FIRE ):
+      case( Occupant::OOB ):
 	break;
       }
     }//y

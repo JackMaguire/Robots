@@ -1,5 +1,5 @@
-// g++ filter_states.cc -std=c++2a -o filter_states -Wall -pedantic -Wshadow
-// g++ filter_states.cc -std=c++2a -o filter_states -Wall -pedantic -Wshadow -g -D_GLIBCXX_DEBUG
+// g++ gcn.cc -std=c++2a -o gcn -Wall -pedantic -Wshadow
+// g++ gcn.cc -std=c++2a -o gcn -Wall -pedantic -Wshadow -g -D_GLIBCXX_DEBUG
 
 #include "robots.hh"
 //#include "run_nn.hh"
@@ -108,9 +108,9 @@ get_local_candidates( Board const & board ){
   for( p.y = h.y-1; p.y <= h.y+1; ++p.y ){
     for( p.x = h.x-1; p.x <= h.x+1; ++p.x ){
       if( ! board.position_is_in_bounds( p ) ){
-	all.emplace_back( p, Occupant::OOB, human_position );
+	all.emplace_back( p, Occupant::OOB, h );
       } else {
-	all.emplace_back( p, board.cell( p ), human_position );
+	all.emplace_back( p, board.cell( p ), h );
       }
     }
   }
@@ -160,7 +160,7 @@ get_top_candidates( Board const & board, Options const & options ){
   assert( nskipped == 9 );
 
   std::sort( all.begin(), all.end(), 
-    []( NodeCandidate const & a, MyClass const & b ) -> bool { 
+    []( NodeCandidate const & a, NodeCandidate const & b ) -> bool { 
       return a.distance < b.distance; 
     });
 
@@ -174,9 +174,9 @@ get_top_candidates( Board const & board, Options const & options ){
 
 using Forecasts = std::array< std::array< ForecastResults, 3 >, 3 >;
 
-constexpr F = 3;  // TODO
-constexpr Fx = 2; // TODO
-constexpr S = 1;  // TODO
+constexpr int F = 3;  // TODO
+constexpr int Fx = 2; // TODO
+constexpr int S = 1;  // TODO
 
 // X: (N,F)
 using Xvec = std::vector< std::array< float, F > >;
@@ -320,21 +320,21 @@ make_data( std::string const & line, Options const & options ){
   
   for( unsigned int i = 0; i < all_elements.size(); ++i ){
     //X
-    data.Xvec[ i ] = calcF( i, all_elements[ i ], forecasts );
+    data.X[ i ] = calcF( i, all_elements[ i ], forecasts );
 
     if( i < 9 ){
-      data.X2vec[ i ] = calcFx( i, all_elements[ i ], forecasts );
+      data.X2[ i ] = calcFx( i, all_elements[ i ], forecasts );
     }
 
     for( unsigned int j = i+1; j < all_elements.size(); ++j ){
       bool const has_e = has_edge( all_elements, i, j );
       if( has_e ){
 	//A
-	data.Avec[ i ][ j ] = 1;
-	data.Avec[ j ][ i ] = 1;
+	data.A[ i ][ j ] = 1;
+	data.A[ j ][ i ] = 1;
 
 	//E
-	calcS( all_elements, i, j, data.Evec[ i ][ j ], data.Evec[ j ][ i ] )
+	calcS( all_elements, i, j, data.E[ i ][ j ], data.E[ j ][ i ] )
       }
 
     }
@@ -368,3 +368,7 @@ make_data( std::string const & line, Options const & options ){
   //std::cout << std::endl;
 }
 */
+
+int main(){
+
+}

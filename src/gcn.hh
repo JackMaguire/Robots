@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <cstdlib> //rand()
+#include <algorithm> //min
 
 #include <stdlib.h>
 #include <sys/time.h>
@@ -82,6 +83,7 @@ struct Options {
 };
 
 struct NodeCandidate {
+  NodeCandidate() = default;
   NodeCandidate( int x, int y, Occupant o, Position const & human_position ){
     pos.x = x;
     pos.y = y;
@@ -175,8 +177,8 @@ get_top_candidates( Board const & board, Options const & options ){
 using Forecasts = std::array< std::array< ForecastResults, 3 >, 3 >;
 
 constexpr int F = 3;
-constexpr int Fx = 2;
-constexpr int S = 1;
+constexpr int Fx = 3;
+constexpr int S = 5;
 
 // X: (N,F)
 using Xvec = std::vector< std::array< float, F > >;
@@ -287,15 +289,17 @@ calcFx(
   constexpr float DIAGONAL = -1.0;
 
   auto && transform =
-    []( int const n_robots ){
-      return ( n_robots > 0 ? log( n_robots ) : -1.0 );
+    []( int const n_robots ) -> float {
+      auto const trans = ( n_robots > 0 ? log( n_robots ) : -1.0 );
+      std::cout << "!!!" << n_robots << " " << trans << std::endl;
+      return trans;
     };
 
   if( i == 0 ){ //Q
     values[ 0 ] = DIAGONAL;
     auto const n_robots = n_robots_in_corner< -1, 1 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 0 ][ 2 ].legal;
+    values[ 2 ] = forecasts[ 0 ][ 2 ].legal ? 1.0 : 0.0;
     return values;
   }
 
@@ -303,7 +307,7 @@ calcFx(
     values[ 0 ] = CARDINAL;
     auto const n_robots = n_robots_in_line< 0, 1 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 1 ][ 2 ].legal;    
+    values[ 2 ] = forecasts[ 1 ][ 2 ].legal ? 1.0 : 0.0;    
     return values;
   }
 
@@ -311,54 +315,54 @@ calcFx(
     values[ 0 ] = DIAGONAL;
     auto const n_robots = n_robots_in_corner< 1, 1 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 2 ][ 2 ].legal;    
+    values[ 2 ] = forecasts[ 2 ][ 2 ].legal ? 1.0 : 0.0;    
     return values;
   }
 
-  if( i == 0 ){ //A
+  if( i == 3 ){ //A
     values[ 0 ] = CARDINAL;
     auto const n_robots = n_robots_in_line< -1, 0 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 0 ][ 1 ].legal;    
+    values[ 2 ] = forecasts[ 0 ][ 1 ].legal ? 1.0 : 0.0;    
     return values;
   }
 
-  if( i == 1 ){ //S
+  if( i == 4 ){ //S
     values[ 0 ] = 0;
     values[ 1 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
-    values[ 2 ] = forecasts[ 1 ][ 1 ].legal;    
+    values[ 2 ] = forecasts[ 1 ][ 1 ].legal ? 1.0 : 0.0;    
     return values;
   }
 
-  if( i == 2 ){ //D
+  if( i == 5 ){ //D
     values[ 0 ] = CARDINAL;
     auto const n_robots = n_robots_in_line< 1, 0 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 2 ][ 1 ].legal;    
+    values[ 2 ] = forecasts[ 2 ][ 1 ].legal ? 1.0 : 0.0;    
     return values;
   }
 
-  if( i == 0 ){ //Z
+  if( i == 6 ){ //Z
     values[ 0 ] = DIAGONAL;
     auto const n_robots = n_robots_in_corner< -1, -1 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 0 ][ 0 ].legal;    
+    values[ 2 ] = forecasts[ 0 ][ 0 ].legal ? 1.0 : 0.0;    
     return values;
   }
 
-  if( i == 1 ){ //X
+  if( i == 7 ){ //X
     values[ 0 ] = CARDINAL;
     auto const n_robots = n_robots_in_line< 0, -1 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 1 ][ 0 ].legal;    
+    values[ 2 ] = forecasts[ 1 ][ 0 ].legal ? 1.0 : 0.0;    
     return values;
   }
 
-  if( i == 2 ){ //C
+  if( i == 8 ){ //C
     values[ 0 ] = DIAGONAL;
     auto const n_robots = n_robots_in_corner< 1, -1 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 2 ][ 0 ].legal;    
+    values[ 2 ] = forecasts[ 2 ][ 0 ].legal ? 1.0 : 0.0;    
     return values;
   }
 
@@ -377,6 +381,54 @@ has_edge(
   constexpr double distance_cutoff = 7.5;
   auto const dist = all_elements[ i ].pos.distance( all_elements[ j ].pos );
   return dist <= distance_cutoff;
+}
+
+void
+calcE(
+  std::vector< NodeCandidate > const & all_elements,
+  unsigned int const i,
+  unsigned int const j,
+  std::array< float, S > & Eij,
+  std::array< float, S > & Eji
+) {
+  auto const dist = all_elements[ i ].pos.distance( all_elements[ j ].pos );
+  
+  // [0] : distance
+  Eij[ 0 ] = Eji[ 0 ] = dist - 3.0;
+
+  Position dpos = all_elements[ i ].pos - all_elements[ j ].pos;
+  dpos.x = abs( dpos.x );
+  dpos.y = abs( dpos.y );
+  int const min = std::min( dpos.x, dpos.y );
+  int const max = std::max( dpos.x, dpos.y );
+  assert( min + max == dpos.x + dpos.y );
+  
+  // [ 1 ]: smaller
+  Eij[ 1 ] = Eji[ 1 ] = min - 2; //-2 offset
+
+  // [ 2 ]: larger
+  Eij[ 2 ] = Eji[ 2 ] = max - 2; //-2 offset
+
+  // [ 3 ]: ratio
+  Eij[ 3 ] = Eji[ 3 ] = (4.0*float(min)/float(max)) - 2.0;
+
+  // [ 4 ] : which one is closer to the human?
+  if( all_elements[ i ].distance < all_elements[ j ].distance ){
+    Eij[ 4 ] = 1;
+    Eji[ 4 ] = -1;
+  } else if( all_elements[ j ].distance < all_elements[ i ].distance ){
+    Eij[ 4 ] = -1;
+    Eji[ 4 ] = 1;
+  } else {
+    //Same distance
+    Eij[ 4 ] = Eji[ 3 ] = 0;
+  }
+}
+
+template< typename T >
+void
+zero_out( T & t ){
+  std::fill( t.begin(), t.end(), 0 );
 }
 
 Data
@@ -407,6 +459,19 @@ make_data( std::string const & line, Options const & options ){
     forcast_all_moves( b );
 
   Data data;  //TODO init arrays and zero out
+  data.X.resize( options.N );
+  for( auto & x : data.X )
+    zero_out( x );
+  data.X2.resize( options.N );
+  for( auto & x : data.X2 )
+    zero_out( x );
+  data.A.resize( options.N );
+  for( auto & a : data.A )
+    a.resize( options.N );
+  data.E.resize( options.N );
+  for( auto & e : data.E )
+    e.resize( options.N );
+  zero_out( data.out );
 
   int const move = std::stoi( tokens[3] );
   switch( move ){
@@ -476,6 +541,7 @@ make_data( std::string const & line, Options const & options ){
 
     if( i < 9 ){
       data.X2[ i ] = calcFx( i, all_elements[ i ], forecasts, b, n_safe_tele );
+      //std::cout << "??? " << data.X2[ i ][ 2 ] << std::endl;
     }
 
     for( unsigned int j = i+1; j < all_elements.size(); ++j ){
@@ -486,7 +552,7 @@ make_data( std::string const & line, Options const & options ){
 	data.A[ j ][ i ] = 1;
 
 	//E
-	calcS( all_elements, i, j, data.E[ i ][ j ], data.E[ j ][ i ] )
+	calcE( all_elements, i, j, data.E[ i ][ j ], data.E[ j ][ i ] );
       }
 
     }
@@ -496,31 +562,63 @@ make_data( std::string const & line, Options const & options ){
 }
 
 
-/*int main(){
-
-
-  for( std::string line; std::getline(std::cin, line); ){
-
-    //std::cout << move << std::endl;
-
-    int n_options = 0;
-    for( auto const & i : forecasts ){
-      for( auto const & j : i ){
-	if( j.legal ) ++n_options;
-	if( j.cascade_safe ) continue;
-      }
-    }
-
-    //std::cout << n_options << std::endl;
-    if( n_options < 2 ) continue;
-
-    std::cout << line << '\n';
-  }
-
-  //std::cout << std::endl;
-}
-*/
+#ifdef MAIN
 
 int main(){
 
+
+  //for( std::string line; std::getline(std::cin, line); ){
+
+    std::string const line = "000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,0,1,9";
+    Options const options = { 15 };
+    auto const data = make_data( line, options );
+
+    std::cout << "X" << std::endl;
+    for( auto const & x : data.X ){
+      for( auto const & i : x )
+	std::cout << i << " ";
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    std::cout << "X2" << std::endl;
+    for( auto const & x : data.X2 ){
+      for( auto const & i : x )
+	std::cout << i << " ";
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    std::cout << "A" << std::endl;
+    for( auto const & x : data.A ){
+      for( auto const & i : x )
+	std::cout << i << " ";
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    std::cout << "E" << std::endl;
+    for( auto const & x : data.E ){
+      for( auto const & i : x ) {
+	for( auto const & j : i ) {
+	  std::cout << j << " ";
+	}
+	std::cout << std::endl;
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    std::cout << "Out" << std::endl;
+    for( auto const & x : data.out ){
+      std::cout << x << " ";
+    }
+    std::cout << std::endl;
+
+  //}
+
+  //std::cout << std::endl;
 }
+
+
+#endif

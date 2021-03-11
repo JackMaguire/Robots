@@ -140,6 +140,9 @@ public:
   move_human( int const dx, int const dy );
 
   bool
+  move_is_safe( int const dx, int const dy ) const;
+
+  bool
   move_is_cascade_safe( int const dx, int const dy ) const;
 
   __attribute__((unused))  
@@ -676,6 +679,13 @@ Board::move_human( int const dx, int const dy ) {
 }
 
 bool
+Board::move_is_safe( int const dx, int const dy ) const {
+  Board copy = (*this);
+  MoveResult const result = copy.move_human( dx, dy );
+  return result != MoveResult::YOU_LOSE;
+}
+
+bool
 Board::move_is_cascade_safe( int const dx, int const dy ) const {
   Board copy = (*this);
   MoveResult result = copy.move_human( dx, dy );
@@ -684,6 +694,7 @@ Board::move_is_cascade_safe( int const dx, int const dy ) const {
   }
   return result != MoveResult::YOU_LOSE;
 }
+
 
 std::string
 Board::get_stringified_representation() const {

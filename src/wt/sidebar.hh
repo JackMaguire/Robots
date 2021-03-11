@@ -36,7 +36,8 @@ public:
     Wt::WMessageBox * const messageBox = this->addChild(
       Wt::cpp14::make_unique< Wt::WMessageBox >(
 	"Controls",
-	"<p>Move: QWEASDZXC</p><p>Teleport: T</p><p>Wait: SpaceBar</p><p>See Last State: '?'</p><p>Sometimes you need to click on the board for it to start listening to your keys</p>",
+	"<p>Move: QWEASDZXC</p>"
+	"<p>Teleport: T</p><p>Wait: SpaceBar</p><p>See Last State: '?'</p><p>Sometimes you need to click on the board for it to start listening to your keys</p>",
 	Wt::Icon::Warning, Wt::StandardButton::Yes //| Wt::StandardButton::No
       )
     );
@@ -51,7 +52,8 @@ public:
   }
 
   
-  void update( RobotsGame<> const & game  ){
+  template< typename GAME >
+  void update( GAME const & game  ){
     score_->setText( "Score: " + std::to_string( game.score() ) );
     tele_->setText( "Teleports: " + std::to_string( game.n_safe_teleports_remaining()));
   }

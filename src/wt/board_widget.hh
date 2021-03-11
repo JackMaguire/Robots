@@ -227,12 +227,14 @@ protected:
       //MODES
     case( '1' ):
       safe_mode_ = !safe_mode_;
-      this->update();
+      update();
+      sidebar_->update( game_, safe_mode_, show_safe_moves_ );
       break;
 
     case( '2' ):
       show_safe_moves_ = !show_safe_moves_;
-      this->update();	
+      update();	
+      sidebar_->update( game_, safe_mode_, show_safe_moves_ );
       break;
 
     default:
@@ -323,7 +325,7 @@ protected:
       }
     }
 
-    sidebar_->update( game_ );
+    sidebar_->update( game_, safe_mode_, show_safe_moves_ );
   }
 
 private:

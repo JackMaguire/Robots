@@ -37,7 +37,7 @@ public:
     scout_ = elementAt(4, 0)->addNew< Wt::WLineEdit >( "Scout Mode: on" );
     scout_->setReadOnly( true );
 
-    ml_ = elementAt(5, 0)->addNew< Wt::WLineEdit >( "ML Mode: on" );
+    ml_ = elementAt(5, 0)->addNew< Wt::WLineEdit >( "ML Mode: off" );
     ml_->setReadOnly( true );
   }
 

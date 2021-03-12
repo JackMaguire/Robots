@@ -566,7 +566,7 @@ make_data(
     }();
   
   for( unsigned int i = 0; i < all_elements.size(); ++i ){
-    std::cout << "Element " << i << " " << all_elements[i].pos.x << " " << " " << all_elements[i].pos.y	<< " " << int(all_elements[i].occ) << " " << all_elements[i].distance << std::endl;
+    //std::cout << "Element " << i << " " << all_elements[i].pos.x << " " << " " << all_elements[i].pos.y	<< " " << int(all_elements[i].occ) << " " << all_elements[i].distance << std::endl;
     
     //X
     data.X[ i ] = calcF( all_elements[ i ] );

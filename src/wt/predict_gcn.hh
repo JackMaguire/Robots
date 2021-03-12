@@ -75,28 +75,28 @@ struct GCN {
     model("/saved_models/2BM.6")
   {
     for ( std::string const & s : model.get_operations() ){
-      std::cout << s << std::endl;
+      //std::cout << s << std::endl;
       //show_shape( s );
     }
 
     auto Xshape = model.get_operation_shape( "serving_default_X_in" );
     for ( auto const x : Xshape ){
-      std::cout << "X " << x << std::endl;
+      //std::cout << "X " << x << std::endl;
     }
 
     auto Ashape = model.get_operation_shape( "serving_default_A_in" );
     for ( auto const x : Ashape ){
-      std::cout << "A " << x << std::endl;
+      //std::cout << "A " << x << std::endl;
     }
 
     auto Eshape = model.get_operation_shape( "serving_default_E_in" );
     for ( auto const x : Eshape ){
-      std::cout << "E " << x << std::endl;
+      //std::cout << "E " << x << std::endl;
     }
 
     /*auto Oshape = model.get_operation_shape( "StatefulPartitionedCall:0" );
     for ( auto const x : Oshape ){
-      std::cout << "O " << x << std::endl;
+      //std::cout << "O " << x << std::endl;
     }*/
 
     run_sanity_check();
@@ -105,7 +105,7 @@ struct GCN {
   void show_shape( std::string const & op ) const {
     auto shape = model.get_operation_shape( op );
     for ( auto const x : shape ){
-      std::cout << op << " " << x << std::endl;
+      //std::cout << op << " " << x << std::endl;
     }    
   }
 
@@ -156,11 +156,11 @@ struct GCN {
       {"StatefulPartitionedCall:0"});
       //{"conv1d_1/bias/v/Read/ReadVariableOp:0"});
 
-    std::cout << "output.size() " << output.size() << std::endl;
+    //std::cout << "output.size() " << output.size() << std::endl;
     assert( output.size() == 1 );
     for( auto o : output[0].get_data< float >() ){
       //assert( abs(o-0.11111) < 0.001 );
-      std::cout << "O: " << o << std::endl;
+      //std::cout << "O: " << o << std::endl;
     }
   }
 
@@ -211,10 +211,10 @@ struct GCN {
 	      },
       {"StatefulPartitionedCall:0"});
 
-    std::cout << "output.size() " << output.size() << std::endl;
+    //std::cout << "output.size() " << output.size() << std::endl;
     assert( output.size() == 1 );
     for( auto o : output[0].get_data< float >() ){
-      std::cout << "O: " << o << std::endl;
+      //std::cout << "O: " << o << std::endl;
     }
     
     Prediction pred;
@@ -346,7 +346,7 @@ struct OldSchoolGCN {
     float *values = static_cast<float *>(TF_TensorData(output_values.get()[0]));
 
     for( uint i = 0; i < 9; ++i ){
-      std::cout << "O: " << values[ i ] << std::endl;
+      //std::cout << "O: " << values[ i ] << std::endl;
       assert( abs(values[ i ]-0.11111) < 0.001 );
     }
     
@@ -463,7 +463,7 @@ struct OldSchoolGCN {
     int argmax = -1;
     float high = 0;
     for( uint i = 0; i < 9; ++i ){
-      std::cout << "O*: " << values[ i ] << std::endl;
+      //std::cout << "O*: " << values[ i ] << std::endl;
       if( values[ i ] > high ){
 	high = values[ i ];
 	argmax = i;

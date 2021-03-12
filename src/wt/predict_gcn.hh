@@ -14,6 +14,62 @@ struct Prediction {
 
 constexpr unsigned int N32 = 32;
 
+inline
+Prediction
+argmax2pred( int const argmax ){
+  Prediction pred;
+
+  //dx
+  switch( argmax ){
+    case( 2 ):
+    case( 5 ):
+    case( 8 ):
+      pred.dx = 1;
+    break;
+
+    case( 1 ):
+    case( 4 ):
+    case( 7 ):
+      pred.dx = 0;
+    break;
+
+    case( 0 ):
+    case( 3 ):
+    case( 6 ):
+      pred.dx = -1;
+    break;
+
+    default:
+      assert( false );
+  }
+
+  //dy
+  switch( argmax ){
+    case( 0 ):
+    case( 1 ):
+    case( 2 ):
+      pred.dy = 1;
+    break;
+
+    case( 3 ):
+    case( 4 ):
+    case( 5 ):
+      pred.dy = 0;
+    break;
+
+    case( 6 ):
+    case( 7 ):
+    case( 8 ):
+      pred.dy = -1;
+    break;
+
+    default:
+      assert( false );
+  }
+
+  return pred;
+}
+
 struct GCN {
   GCN() :
     model("/saved_models/2BM.6")
@@ -326,7 +382,7 @@ struct OldSchoolGCN {
     Data const data = make_data(
       game.board(),
       game.n_safe_teleports_remaining(),
-      int(Key::S), //dummy
+      int(Key::NONE), //dummy
       options
     );
 
@@ -420,8 +476,14 @@ struct OldSchoolGCN {
 
     float *values = static_cast<float *>(TF_TensorData(output_values.get()[0]));
 
+    int argmax = -1;
+    float high = 0;
     for( uint i = 0; i < 9; ++i ){
       std::cout << "O*: " << values[ i ] << std::endl;
+      if( values[ i ] > high ){
+	high = values[ i ];
+	argmax = i;
+      }
     }
     
     TF_DeleteTensor( input_values.get()[0] );
@@ -429,8 +491,7 @@ struct OldSchoolGCN {
     TF_DeleteTensor( input_values.get()[2] );
     TF_DeleteTensor( output_values.get()[0] );
 
-    Prediction p;
-    return p;
+    return argmax2pred( argmax );
   }
 
   void status_check() const {

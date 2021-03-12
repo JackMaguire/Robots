@@ -505,6 +505,7 @@ make_data(
 
   switch( move ){
   case int( Key::NONE ):
+    break;
   case int( Key::T ):
   case int( Key::SPACE ):
   case int( Key::DELETE ):

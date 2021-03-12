@@ -16,6 +16,27 @@
 #include <mutex>
 //#include <array>
 
+/*struct AutoPilotResult {
+  Prediction move;
+  bool teleport = false;
+  bool cascade = false;
+};*/
+
+enum class AutoPilotResult {
+  MOVE,
+  CASCADE,
+  TELEPORT
+};
+
+template< typename GAME >
+AutoPilotResult
+run_autopilot( GAME const & game, Prediction const & pred ){
+
+  
+
+  return AutoPilotResult::MOVE;
+}
+
 struct PaintPalette {
 
   Wt::WBrush human_brush;
@@ -210,6 +231,7 @@ private:
 
   //GCN gcn_;
   OldSchoolGCN gcn_;
+  Prediction current_prediction_;
 
   Board cached_board_;
   bool display_cached_board_;
@@ -282,6 +304,8 @@ BoardWidget< GAME >::draw_foreground(
   if( show_ml_ and !display_cached_board_ and !safe_cascade_exists ){ // ML
     painter.setBrush( palette_.ml_brush );
     Prediction const pred = gcn_.predict( game_ );
+    current_prediction_ = pred;
+
     int const i = human_p.x + pred.dx;
     int const j = (HEIGHT-1) - (human_p.y + pred.dy);
     painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
@@ -376,6 +400,16 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
   case( 'C' ):
     handle_move(  1, -1 );
   break;
+
+
+
+  case( 'p' ):
+  case( 'P' ):
+    if( show_ml_ ){
+      handle_move( current_prediction_.dx, current_prediction_.dy );
+    }
+  break;
+
 
 
   case( 't' ):

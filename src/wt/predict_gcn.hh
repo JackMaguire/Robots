@@ -74,6 +74,7 @@ struct GCN {
   GCN() :
     model("/saved_models/2BM.6")
   {
+    /*
     for ( std::string const & s : model.get_operations() ){
       //std::cout << s << std::endl;
       //show_shape( s );
@@ -93,6 +94,7 @@ struct GCN {
     for ( auto const x : Eshape ){
       //std::cout << "E " << x << std::endl;
     }
+    */
 
     /*auto Oshape = model.get_operation_shape( "StatefulPartitionedCall:0" );
     for ( auto const x : Oshape ){
@@ -102,11 +104,12 @@ struct GCN {
     run_sanity_check();
   }
 
-  void show_shape( std::string const & op ) const {
-    auto shape = model.get_operation_shape( op );
-    for ( auto const x : shape ){
-      //std::cout << op << " " << x << std::endl;
-    }    
+  void show_shape( std::string const & ) const {
+    //auto shape = model.get_operation_shape( op );
+    /*for ( auto const x : shape ){
+      fg
+      std::cout << op << " " << x << std::endl;
+    } */   
   }
 
   void
@@ -159,7 +162,7 @@ struct GCN {
     //std::cout << "output.size() " << output.size() << std::endl;
     assert( output.size() == 1 );
     for( auto o : output[0].get_data< float >() ){
-      //assert( abs(o-0.11111) < 0.001 );
+      assert( abs(o-0.11111) < 0.001 );
       //std::cout << "O: " << o << std::endl;
     }
   }

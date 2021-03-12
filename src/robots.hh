@@ -145,6 +145,9 @@ public:
   bool
   move_is_cascade_safe( int const dx, int const dy ) const;
 
+  bool
+  move_is_cascade_safe( int const dx, int const dy, int & n_robots_remaining ) const;
+
   __attribute__((unused))  
   std::string
   get_stringified_representation() const;
@@ -274,7 +277,7 @@ public:
     } else {
       board_.init( ++round_ );
       if( GO_HUMAN_SPEED ){
-	std::this_thread::sleep_for (std::chrono::seconds(1));
+	std::this_thread::sleep_for (std::chrono::milliseconds(sleepsize));
       }
       Visualizer::show( board_ );    
     }
@@ -692,6 +695,21 @@ Board::move_is_cascade_safe( int const dx, int const dy ) const {
   while ( result == MoveResult::CONTINUE ){
     result = copy.move_human( 0, 0 );
   }
+  return result != MoveResult::YOU_LOSE;
+}
+
+bool
+Board::move_is_cascade_safe(
+  int const dx,
+  int const dy,
+  int & nremaining
+) const {
+  Board copy = (*this);
+  MoveResult result = copy.move_human( dx, dy );
+  while ( result == MoveResult::CONTINUE ){
+    result = copy.move_human( 0, 0 );
+  }
+  nremaining = copy.n_robots();
   return result != MoveResult::YOU_LOSE;
 }
 

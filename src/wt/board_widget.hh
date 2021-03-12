@@ -22,19 +22,67 @@
   bool cascade = false;
 };*/
 
-enum class AutoPilotResult {
+enum class AutoPilotResultEnum {
   MOVE,
   CASCADE,
   TELEPORT
 };
 
+struct AutoPilotResult {
+  AutoPilotResultEnum apre;
+  int dx;
+  int dy;
+};
+
 template< typename GAME >
 AutoPilotResult
-run_autopilot( GAME const & game, Prediction const & pred ){
-
+run_autopilot(
+  GAME const & game,
+  Prediction const & pred
+){
+  auto const & board = game.board();
   
+  AutoPilotResult apr;
 
-  return AutoPilotResult::MOVE;
+  if( board.move_is_cascade_safe( 0,0 ) ){
+    apr.apre = AutoPilotResultEnum::CASCADE;
+    return apr;
+  }
+
+  int n_robots_remaining_BEST = -1;
+  apr.dx = pred.dx;
+  apr.dy = pred.dy;
+
+  bool safe_move_exists = false;
+
+  auto const human_p = board.human_position();
+  for( int dx = -1; dx <= 1; ++dx ){
+    if( human_p.x + dx >= WIDTH ) continue;
+    for( int dy = -1; dy <= 1; ++dy ){
+      if( human_p.y + dy >= HEIGHT ) continue;
+
+      int n_robots_remaining = 0;
+
+      if( board.move_is_safe( dx, dy ) ){
+	safe_move_exists = true;
+	if( board.move_is_cascade_safe( dx, dy, n_robots_remaining ) ){
+	  if( n_robots_remaining > n_robots_remaining_BEST ){
+	    apr.dx = dx;
+	    apr.dy = dy;
+	    n_robots_remaining = n_robots_remaining_BEST;
+	  }
+	}
+      }
+    }
+  }
+
+  if( ! safe_move_exists ){
+    apr.apre = AutoPilotResultEnum::TELEPORT;
+    return apr;
+  }
+
+  apr.apre = AutoPilotResultEnum::MOVE;
+  return apr;
 }
 
 struct PaintPalette {
@@ -167,13 +215,16 @@ protected:
     //Need to cascade INSIDE the painting function?
     //But maybe that still won't work
     bool const game_over = game_.cascade( [=](){
-	std::cout << "update!" << std::endl;
+	//std::cout << "update!" << std::endl;
 	//std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	this->update();
 	app_->processEvents();
       } );
     return game_over;
   }
+
+  void
+  loop_autopilot();
 
   void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
     if( display_cached_board_ == true ){
@@ -232,7 +283,6 @@ private:
   //GCN gcn_;
   OldSchoolGCN gcn_;
   Prediction current_prediction_;
-  bool currently_a_safe_move_ = false;
 
   Board cached_board_;
   bool display_cached_board_;
@@ -302,8 +352,6 @@ BoardWidget< GAME >::draw_foreground(
     }
   }
 
-  currently_a_safe_move_ = safe_cascade_exists;
-
   if( show_ml_ and !display_cached_board_ and !safe_cascade_exists ){ // ML
     painter.setBrush( palette_.ml_brush );
     Prediction const pred = gcn_.predict( game_ );
@@ -345,6 +393,21 @@ BoardWidget< GAME >::draw_foreground(
     }
   }
 }
+
+template< typename GAME >
+void
+BoardWidget< GAME >::loop_autopilot(){
+  for( unsigned int i = 0; i < 100; ++i ) {
+    AutoPilotResult const apr = run_autopilot( game_, current_prediction_ );
+    handle_move( apr.dx, apr.dy,
+      apr.apre == AutoPilotResultEnum::TELEPORT,
+      apr.apre == AutoPilotResultEnum::CASCADE );
+    std::this_thread::sleep_for (std::chrono::milliseconds(250));
+    this->update();
+    app_->processEvents();
+  }
+}
+
 
 template< typename GAME >
 void
@@ -408,11 +471,17 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
 
   case( 'p' ):
   case( 'P' ):
-    if( show_ml_ && !currently_a_safe_move_ ){
-      handle_move( current_prediction_.dx, current_prediction_.dy );
+    if( show_ml_ ){
+      AutoPilotResult const apr = run_autopilot( game_, current_prediction_ );
+      handle_move( apr.dx, apr.dy,
+	apr.apre == AutoPilotResultEnum::TELEPORT,
+	apr.apre == AutoPilotResultEnum::CASCADE );
     }
   break;
 
+  case( '0' ):
+    if( show_ml_ ) loop_autopilot();
+  break;
 
 
   case( 't' ):

@@ -10,11 +10,12 @@
 
 #include "robots.hh"
 #include "sidebar.hh"
+#include "predict_gcn.hh"
 
 #include <iostream>
 #include <mutex>
 
-
+template< typename GAME >
 class BoardWidget : public Wt::WPaintedWidget {//, Wt::WInteractWidget {
 public:
   BoardWidget(
@@ -89,7 +90,12 @@ protected:
 
   }
 
-  void draw_foreground( Board const & board, Wt::WPainter & painter, int const grid_size ){
+  void
+  draw_foreground(
+    Board const & board,
+    Wt::WPainter & painter,
+    int const grid_size
+  ){
   
     Wt::WColor const human_color = ( safe_mode_ ? Wt::WColor( 10, 200, 10 ) : Wt::WColor( 10, 100, 10 ) );
     //if ( safe_mode_ ) Wt::WColor const human_color( 10, 150, 10 );
@@ -97,37 +103,50 @@ protected:
 
     Wt::WColor const robot_color( 10, 10, 100 );
     Wt::WColor const fire_color( 200, 10, 10 );
-    //Wt::WColor const ml_color( 80, 80, 10 );
-    //Wt::WColor const safety_color( 120, 200, 120 );
+    Wt::WColor const ml_color( 80, 80, 10 );
     Wt::WColor const safety_color( 0, 0, 0 );
 
     Wt::WBrush const robot_brush( robot_color );
     Wt::WBrush const human_brush( human_color );
     Wt::WBrush const fire_brush( fire_color );
-    //Wt::WBrush const ml_brush( ml_color );
+    Wt::WBrush const ml_brush( ml_color );
     Wt::WBrush safety_brush( safety_color );
     safety_brush.setStyle( Wt::BrushStyle::None );
+
+    Wt::WPen pen;
+    pen.setWidth( 1.0 );
+    painter.setPen( pen );
     
-    if( show_safe_moves_ ){ //safety
+    bool safe_cascade_exists = false;
 
-      Wt::WPen pen;
-      pen.setWidth( 1.0 );
-      painter.setPen( pen );
-
+    if( show_safe_moves_ ){
       painter.setBrush( safety_brush );
-      auto const human_p = board.human_position();
-      for( int dx = -1; dx <= 1; ++dx ){
-	if( human_p.x + dx >= WIDTH ) continue;
-	for( int dy = -1; dy <= 1; ++dy ){
-	  if( human_p.y + dy >= HEIGHT ) continue;
-	  if( board.move_is_cascade_safe( dx, dy ) ){
+    }
+
+    auto const human_p = board.human_position();
+    for( int dx = -1; dx <= 1; ++dx ){
+      if( human_p.x + dx >= WIDTH ) continue;
+      for( int dy = -1; dy <= 1; ++dy ){
+	if( human_p.y + dy >= HEIGHT ) continue;
+	if( board.move_is_cascade_safe( dx, dy ) ){
+	  if( show_safe_moves_ ){
 	    int const i = human_p.x + dx;
 	    int const j = (HEIGHT-1) - (human_p.y + dy);
 	    painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
-	    //painter.drawChord( i*grid_size, j*grid_size, grid_size, grid_size, 0, 2880*2 );
+	  }
+	  if( show_ml_ ){
+	    safe_cascade_exists = true;
 	  }
 	}
       }
+    }
+
+    if( show_ml_ and !display_cached_board_ and !safe_cascade_exists ){ // ML
+      painter.setBrush( ml_brush );
+      Prediction const pred = predict( game_ );
+      int const i = human_p.x + pred.dx;
+      int const j = (HEIGHT-1) - (human_p.y + pred.dy);
+      painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
     }
 
     { // members
@@ -237,6 +256,12 @@ protected:
       sidebar_->update( game_, safe_mode_, show_safe_moves_ );
       break;
 
+    case( '3' ):
+      show_ml_ = !show_ml_;
+      update();	
+      sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
+      break;
+
     default:
       break;
     }
@@ -260,7 +285,7 @@ protected:
     messageBox->buttonClicked().connect(
       [=] {
 	if( messageBox->buttonResult() == Wt::StandardButton::Yes ) {
-	  game_ = decltype(game_)();
+	  game_ = GAME();
 	  update();
 	}
 	this->removeChild( messageBox );
@@ -272,6 +297,11 @@ protected:
   bool handle_wait(){
     //TODO look into WTimer: https://www.webtoolkit.eu/wt/doc/reference/html/classWt_1_1WTimer.html
     //This has some good ideas too: https://redmine.webtoolkit.eu/boards/2/topics/14880?r=14884#message-14884
+
+    if( safe_mode_ ){
+      if( ! game_.board().move_is_cascade_safe( 0, 0 ) ) return false;
+    }
+
 
     //TODO
     //This is going to require some hacking.
@@ -329,7 +359,7 @@ protected:
   }
 
 private:
-  RobotsGame< NullVisualizer, true, 100 > game_;
+  GAME game_;
   int width_ = 0;
   int height_ = 0;
 
@@ -343,6 +373,7 @@ private:
 
   bool safe_mode_ = false;
   bool show_safe_moves_ = true;
+  bool show_ml_ = false;
 
   bool ignore_keys_ = false;
 };

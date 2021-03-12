@@ -8,5 +8,5 @@
 #WARN="-Wall -Wshadow -Wunused -pedantic -Wextra"
 WARN="$WARN -Wno-subobject-linkage"
 
-g++ -std=c++17 -o robots_app robots_app.cc -lwthttp -lwt -lboost_signals -Iwt_src -Iwt_build_src -L. -lstdc++fs -Wl,-rpath,. $WARN && \
+g++ -std=c++17 -o robots_app robots_app.cc -lwthttp -lwt -lboost_signals -Iwt_src -Iwt_build_src -Icppflow/include -Itf/include -L. -Ltf/lib -lstdc++fs -Wl,-rpath,. $WARN && \
     ./robots_app --docroot . --http-address 0.0.0.0 --http-port 8080

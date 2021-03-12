@@ -36,6 +36,9 @@ public:
 
     scout_ = elementAt(4, 0)->addNew< Wt::WLineEdit >( "Scout Mode: on" );
     scout_->setReadOnly( true );
+
+    scout_ = elementAt(5, 0)->addNew< Wt::WLineEdit >( "ML Mode: on" );
+    scout_->setReadOnly( true );
   }
 
   void display_controls(){
@@ -48,6 +51,7 @@ public:
 	"<p>See Last State: '?'</p>"
 	"<p>Toggle Safe Mode: '1' (human will be lighter green in safe mode)</p>"
 	"<p>Toggle Scout Mode: '2'</p>"
+	"<p>Toggle ML Mode: '3'</p>"
 	"<p>Sometimes you need to click on the board for it to start listening to your keys</p>",
 	Wt::Icon::Warning, Wt::StandardButton::Yes //| Wt::StandardButton::No
       )
@@ -64,11 +68,12 @@ public:
 
   
   template< typename GAME >
-  void update( GAME const & game, bool const safe_mode, bool const scout_mode  ){
+  void update( GAME const & game, bool const safe_mode, bool const scout_mode, bool const show_ml  ){
     score_->setText( "Score: " + std::to_string( game.score() ) );
     tele_->setText( "Teleports: " + std::to_string( game.n_safe_teleports_remaining()));
     safe_->setText( "Safe Mode: " + std::string(safe_mode?"on":"off") );
     scout_->setText( "Scout Mode: " + std::string(scout_mode?"on":"off") );
+    ml_->setText( "ML Mode: " + std::string(ml_mode?"on":"off") );
   }
 
 private:
@@ -76,4 +81,5 @@ private:
   Wt::WLineEdit * tele_;
   Wt::WLineEdit * safe_;
   Wt::WLineEdit * scout_;
+  Wt::WLineEdit * ml_;
 };

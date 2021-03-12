@@ -13,6 +13,8 @@
 
 using namespace Wt;
 
+using MyBoardWidget = BoardWidget< RobotsGame< NullVisualizer, true, 100 > >;
+
 std::unique_ptr< Wt::WApplication >
 createApplication( Wt::WEnvironment const & env ) {
 
@@ -27,10 +29,10 @@ createApplication( Wt::WEnvironment const & env ) {
   ScoreWidget * raw_score = &(*score);
   border->addWidget( std::move( score ),  Wt::LayoutPosition::East );
 
-  border->addWidget( Wt::cpp14::make_unique< BoardWidget >( raw_score, &(*app) ),  Wt::LayoutPosition::Center );
+  border->addWidget( Wt::cpp14::make_unique< MyBoardWidget >( raw_score, &(*app) ),  Wt::LayoutPosition::Center );
  
   
-  //app->root()->addWidget( Wt::cpp14::make_unique< BoardWidget >( ) );
+  //app->root()->addWidget( Wt::cpp14::make_unique< MyBoardWidget >( ) );
   app->setCssTheme( "polished" );
   app->setTheme( std::make_shared< Wt::WBootstrapTheme >() ) ;
 

@@ -95,197 +95,17 @@ public:
   }
 
 protected:
-  void draw_background( Wt::WPainter & painter, int const grid_size ){
-
-    Wt::WPen pen;
-    pen.setWidth( 0.1 );
-    painter.setPen( pen );
-
-    Wt::WColor c1( 220, 220, 220 );
-    Wt::WColor c2( 200, 200, 200 );
-
-    bool use_c1 = false;
-
-    for( int i = 0; i < WIDTH; ++i ){
-      for( int j = 0; j < HEIGHT; ++j ){
-	use_c1 = !use_c1;
-	if( use_c1 ) painter.setBrush(Wt::WBrush(c1));
-	else         painter.setBrush(Wt::WBrush(c2));
-	painter.drawRect( i*grid_size, j*grid_size, grid_size, grid_size );
-      }
-      use_c1 = !use_c1;
-    }
-
-  }
+  void
+  draw_background( Wt::WPainter & painter, int const grid_size );
 
   void
   draw_foreground(
     Board const & board,
     Wt::WPainter & painter,
     int const grid_size
-  ){
-    painter.setPen( palette_.wide_pen );
-    
-    bool safe_cascade_exists = false;
+  );
 
-    if( show_safe_moves_ ){
-      painter.setBrush( palette_.safety_brush );
-    }
-
-    auto const human_p = board.human_position();
-    for( int dx = -1; dx <= 1; ++dx ){
-      if( human_p.x + dx >= WIDTH ) continue;
-      for( int dy = -1; dy <= 1; ++dy ){
-	if( human_p.y + dy >= HEIGHT ) continue;
-	if( board.move_is_cascade_safe( dx, dy ) ){
-	  if( show_safe_moves_ ){
-	    int const i = human_p.x + dx;
-	    int const j = (HEIGHT-1) - (human_p.y + dy);
-	    painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
-	  }
-	  if( show_ml_ ){
-	    safe_cascade_exists = true;
-	  }
-	}
-      }
-    }
-
-    if( show_ml_ and !display_cached_board_ and !safe_cascade_exists ){ // ML
-      painter.setBrush( palette_.ml_brush );
-      Prediction const pred = predict( game_ );
-      int const i = human_p.x + pred.dx;
-      int const j = (HEIGHT-1) - (human_p.y + pred.dy);
-      painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
-    }
-
-    { // members
-
-      painter.setPen( palette_.thin_pen );
-
-      Position p;
-      for( int i = 0; i < WIDTH; ++i ){
-	p.x = i;
-	for( int j = 0; j < HEIGHT; ++j ){
-	  p.y = (HEIGHT-1) - j;
-	  switch( board.cell( p ) ){
-	  case( Occupant::EMPTY ):
-	  case( Occupant::OOB ):
-	    continue;
-	  case( Occupant::ROBOT ):
-	    painter.setBrush( palette_.robot_brush );
-	    break;
-	  case( Occupant::HUMAN ):
-	    if( safe_mode_ )
-	      painter.setBrush( palette_.safe_human_brush );
-	    else
-	      painter.setBrush( palette_.human_brush );
-	    break;
-	  case( Occupant::FIRE ):
-	    painter.setBrush( palette_.fire_brush );
-	    break;
-	  }
-	  painter.drawEllipse( i*grid_size +1, j*grid_size +1, grid_size -2, grid_size -2 );
-	}
-      }
-    }
-  }
-
-  void keyDown( Wt::WKeyEvent const & e ){
-    if( ignore_keys_ ) return;
-
-    ignore_keys_ = true;
-
-    //std::cout << "KEY " << e.charCode() << std::endl;
-    std::lock_guard<std::mutex> guard( move_mutex_ );
-
-    switch( e.charCode() ){
-    case( 'q' ):
-    case( 'Q' ):
-      handle_move( -1,  1 );
-    break;
-
-    case( 'w' ):
-    case( 'W' ):
-      handle_move(  0,  1 );
-    break;
-
-    case( 'e' ):
-    case( 'E' ):
-      handle_move(  1,  1 );
-    break;
-
-
-    case( 'a' ):
-    case( 'A' ):
-      handle_move( -1,  0 );
-    break;
-
-    case( 's' ):
-    case( 'S' ):
-      handle_move(  0,  0 );
-    break;
-
-    case( 'd' ):
-    case( 'D' ):
-      handle_move(  1,  0 );
-    break;
-
-
-    case( 'z' ):
-    case( 'Z' ):
-      handle_move( -1, -1 );
-    break;
-
-    case( 'x' ):
-    case( 'X' ):
-      handle_move(  0, -1 );
-    break;
-
-    case( 'c' ):
-    case( 'C' ):
-      handle_move(  1, -1 );
-    break;
-
-
-    case( 't' ):
-    case( 'T' ):
-      handle_move( -1, -1, true );
-    break;
-
-    case( ' ' ):
-      handle_move( -1, -1, false, true );
-      break;
-
-    case( '?' ):
-      toggle_cached_board();
-      break;
-
-
-      //MODES
-    case( '1' ):
-      safe_mode_ = !safe_mode_;
-      update();
-      sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
-      break;
-
-    case( '2' ):
-      show_safe_moves_ = !show_safe_moves_;
-      update();	
-      sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
-      break;
-
-    case( '3' ):
-      show_ml_ = !show_ml_;
-      update();	
-      sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
-      break;
-
-    default:
-      break;
-    }
-
-    ignore_keys_ = false;
-  }
+  void keyDown( Wt::WKeyEvent const & e );
 
   void toggle_cached_board(){
     display_cached_board_ = ! display_cached_board_;
@@ -397,3 +217,200 @@ private:
 
   bool ignore_keys_ = false;
 };
+
+template< typename GAME >
+void
+BoardWidget< GAME >::draw_background( Wt::WPainter & painter, int const grid_size ){
+
+  Wt::WPen pen;
+  pen.setWidth( 0.1 );
+  painter.setPen( pen );
+
+  Wt::WColor c1( 220, 220, 220 );
+  Wt::WColor c2( 200, 200, 200 );
+
+  bool use_c1 = false;
+
+  for( int i = 0; i < WIDTH; ++i ){
+    for( int j = 0; j < HEIGHT; ++j ){
+      use_c1 = !use_c1;
+      if( use_c1 ) painter.setBrush(Wt::WBrush(c1));
+      else         painter.setBrush(Wt::WBrush(c2));
+      painter.drawRect( i*grid_size, j*grid_size, grid_size, grid_size );
+    }
+    use_c1 = !use_c1;
+  }
+
+}
+
+template< typename GAME >
+void
+BoardWidget< GAME >::draw_foreground(
+  Board const & board,
+  Wt::WPainter & painter,
+  int const grid_size
+){
+  painter.setPen( palette_.wide_pen );
+    
+  bool safe_cascade_exists = false;
+
+  if( show_safe_moves_ ){
+    painter.setBrush( palette_.safety_brush );
+  }
+
+  auto const human_p = board.human_position();
+  for( int dx = -1; dx <= 1; ++dx ){
+    if( human_p.x + dx >= WIDTH ) continue;
+    for( int dy = -1; dy <= 1; ++dy ){
+      if( human_p.y + dy >= HEIGHT ) continue;
+      if( board.move_is_cascade_safe( dx, dy ) ){
+	if( show_safe_moves_ ){
+	  int const i = human_p.x + dx;
+	  int const j = (HEIGHT-1) - (human_p.y + dy);
+	  painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
+	}
+	if( show_ml_ ){
+	  safe_cascade_exists = true;
+	}
+      }
+    }
+  }
+
+  if( show_ml_ and !display_cached_board_ and !safe_cascade_exists ){ // ML
+    painter.setBrush( palette_.ml_brush );
+    Prediction const pred = predict( game_ );
+    int const i = human_p.x + pred.dx;
+    int const j = (HEIGHT-1) - (human_p.y + pred.dy);
+    painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
+  }
+
+  { // members
+
+    painter.setPen( palette_.thin_pen );
+
+    Position p;
+    for( int i = 0; i < WIDTH; ++i ){
+      p.x = i;
+      for( int j = 0; j < HEIGHT; ++j ){
+	p.y = (HEIGHT-1) - j;
+	switch( board.cell( p ) ){
+	case( Occupant::EMPTY ):
+	case( Occupant::OOB ):
+	  continue;
+	case( Occupant::ROBOT ):
+	  painter.setBrush( palette_.robot_brush );
+	  break;
+	case( Occupant::HUMAN ):
+	  if( safe_mode_ )
+	    painter.setBrush( palette_.safe_human_brush );
+	  else
+	    painter.setBrush( palette_.human_brush );
+	  break;
+	case( Occupant::FIRE ):
+	  painter.setBrush( palette_.fire_brush );
+	  break;
+	}
+	painter.drawEllipse( i*grid_size +1, j*grid_size +1, grid_size -2, grid_size -2 );
+      }
+    }
+  }
+}
+
+template< typename GAME >
+void
+BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
+  if( ignore_keys_ ) return;
+
+  ignore_keys_ = true;
+
+  //std::cout << "KEY " << e.charCode() << std::endl;
+  std::lock_guard<std::mutex> guard( move_mutex_ );
+
+  switch( e.charCode() ){
+  case( 'q' ):
+  case( 'Q' ):
+    handle_move( -1,  1 );
+  break;
+
+  case( 'w' ):
+  case( 'W' ):
+    handle_move(  0,  1 );
+  break;
+
+  case( 'e' ):
+  case( 'E' ):
+    handle_move(  1,  1 );
+  break;
+
+
+  case( 'a' ):
+  case( 'A' ):
+    handle_move( -1,  0 );
+  break;
+
+  case( 's' ):
+  case( 'S' ):
+    handle_move(  0,  0 );
+  break;
+
+  case( 'd' ):
+  case( 'D' ):
+    handle_move(  1,  0 );
+  break;
+
+
+  case( 'z' ):
+  case( 'Z' ):
+    handle_move( -1, -1 );
+  break;
+
+  case( 'x' ):
+  case( 'X' ):
+    handle_move(  0, -1 );
+  break;
+
+  case( 'c' ):
+  case( 'C' ):
+    handle_move(  1, -1 );
+  break;
+
+
+  case( 't' ):
+  case( 'T' ):
+    handle_move( -1, -1, true );
+  break;
+
+  case( ' ' ):
+    handle_move( -1, -1, false, true );
+    break;
+
+  case( '?' ):
+    toggle_cached_board();
+    break;
+
+
+    //MODES
+  case( '1' ):
+    safe_mode_ = !safe_mode_;
+    update();
+    sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
+    break;
+
+  case( '2' ):
+    show_safe_moves_ = !show_safe_moves_;
+    update();	
+    sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
+    break;
+
+  case( '3' ):
+    show_ml_ = !show_ml_;
+    update();	
+    sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
+    break;
+
+  default:
+    break;
+  }
+
+  ignore_keys_ = false;
+}

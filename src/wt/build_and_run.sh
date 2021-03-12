@@ -11,5 +11,7 @@ WARN="$WARN -Wno-subobject-linkage"
 #DEBUG="-D_GLIBCXX_DEBUG"
 #DEBUG="$DEBUG -g"
 
-g++ -std=c++17 -o robots_app robots_app.cc -lwthttp -lwt -lboost_signals -isystem wt_src -isystem wt_build_src -isystem cppflow/include -isystem tf/include -L. -Ltf/lib -lstdc++fs -Wl,-rpath,. $WARN $DEBUG && \
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/tf/lib/
+
+g++ -std=c++17 -o robots_app robots_app.cc -lwthttp -lwt -ltensorflow -lboost_signals -isystem wt_src -isystem wt_build_src -isystem cppflow/include -isystem tf/include -L. -Ltf/lib -lstdc++fs -Wl,-rpath,.  $WARN $DEBUG && \
     ./robots_app --docroot . --http-address 0.0.0.0 --http-port 8080

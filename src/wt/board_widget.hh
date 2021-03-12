@@ -203,10 +203,12 @@ private:
 
   std::mutex move_mutex_;
 
-  PaintPalette palette_;
+  const PaintPalette palette_;
 
   ScoreWidget * sidebar_;
   Wt::WApplication * app_;
+
+  GCN gcn_;
 
   Board cached_board_;
   bool display_cached_board_;
@@ -278,7 +280,7 @@ BoardWidget< GAME >::draw_foreground(
 
   if( show_ml_ and !display_cached_board_ and !safe_cascade_exists ){ // ML
     painter.setBrush( palette_.ml_brush );
-    Prediction const pred = predict( game_ );
+    Prediction const pred = gcn_.predict( game_ );
     int const i = human_p.x + pred.dx;
     int const j = (HEIGHT-1) - (human_p.y + pred.dy);
     painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );

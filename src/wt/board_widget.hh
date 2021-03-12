@@ -208,7 +208,8 @@ private:
   ScoreWidget * sidebar_;
   Wt::WApplication * app_;
 
-  GCN gcn_;
+  //GCN gcn_;
+  OldSchoolGCN gcn_;
 
   Board cached_board_;
   bool display_cached_board_;

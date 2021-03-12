@@ -9,6 +9,7 @@
 #include <Wt/WApplication.h>
 
 #include "robots.hh"
+#include "gcn.hh"
 #include "sidebar.hh"
 #include "predict_gcn.hh"
 
@@ -357,9 +358,31 @@ BoardWidget< GAME >::draw_foreground(
     Prediction const pred = gcn_.predict( game_ );
     current_prediction_ = pred;
 
-    int const i = human_p.x + pred.dx;
-    int const j = (HEIGHT-1) - (human_p.y + pred.dy);
-    painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
+    {
+      int const i = human_p.x + pred.dx;
+      int const j = (HEIGHT-1) - (human_p.y + pred.dy);
+      painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
+    }
+
+    //lines
+    Options options;
+    options.N = 32;
+    auto const elements = get_candidates( board, options );
+    for( uint a = 0; a < elements.size(); ++a ){
+      for( uint b = a+1; b < elements.size(); ++b ){
+	if( has_edge( elements, a, b ) ){
+	  int const i1 = elements[a].pos.x;
+	  int const j1 = (HEIGHT-1) - (elements[a].pos.y);
+	  int const i2 = elements[b].pos.x;
+	  int const j2 = (HEIGHT-1) - (elements[b].pos.y);
+
+	  int half = grid_size / 2;
+
+	  painter.drawLine( i1*grid_size+half, j1*grid_size+half, i2*grid_size+half, j2*grid_size+half );
+
+	}
+      }
+    }
   }
 
   { // members

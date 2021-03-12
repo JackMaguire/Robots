@@ -1,3 +1,5 @@
+#pragma once
+
 // g++ gcn.cc -std=c++2a -o gcn -Wall -pedantic -Wshadow
 // g++ gcn.cc -std=c++2a -o gcn -Wall -pedantic -Wshadow -g -D_GLIBCXX_DEBUG
 
@@ -477,6 +479,23 @@ zero_out( T & t ){
   std::fill( t.begin(), t.end(), 0 );
 }
 
+std::vector< NodeCandidate >
+get_candidates(
+  Board const & b,
+  Options const & options
+){  
+  std::vector< NodeCandidate > local_candidates = get_local_candidates( b );
+  std::vector< NodeCandidate > far_candidates = get_top_candidates( b, options );
+  std::vector< NodeCandidate > all_elements_i;
+  all_elements_i.reserve( options.N );
+  all_elements_i.insert( all_elements_i.end(),
+    local_candidates.begin(), local_candidates.end() );
+  all_elements_i.insert( all_elements_i.end(),
+    far_candidates.begin(), far_candidates.end() );
+  return all_elements_i;
+}
+
+
 Data
 make_data(
   Board const & b,
@@ -553,18 +572,8 @@ make_data(
 
   
   std::vector< NodeCandidate > const all_elements =
-    [&](){
-      std::vector< NodeCandidate > local_candidates = get_local_candidates( b );
-      std::vector< NodeCandidate > far_candidates = get_top_candidates( b, options );
-      std::vector< NodeCandidate > all_elements_i;
-      all_elements_i.reserve( options.N );
-      all_elements_i.insert( all_elements_i.end(),
-	local_candidates.begin(), local_candidates.end() );
-      all_elements_i.insert( all_elements_i.end(),
-	far_candidates.begin(), far_candidates.end() );
-      return all_elements_i;
-    }();
-  
+    get_candidates( b, options );
+
   for( unsigned int i = 0; i < all_elements.size(); ++i ){
     //std::cout << "Element " << i << " " << all_elements[i].pos.x << " " << " " << all_elements[i].pos.y	<< " " << int(all_elements[i].occ) << " " << all_elements[i].distance << std::endl;
     
@@ -594,7 +603,6 @@ make_data(
 
   return data;
 }
-
 
 Data
 make_data( std::string const & line, Options const & options ){

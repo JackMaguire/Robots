@@ -12,6 +12,8 @@ struct Prediction {
   int dy = -2;
 };
 
+constexpr unsigned int N32 = 32;
+
 struct GCN {
   GCN() :
     model("/saved_models/2BM.6")
@@ -53,18 +55,16 @@ struct GCN {
 
   void
   run_sanity_check(){
-    Options options;
-    options.N = 32;
 
-    X12vec X( options.N );
+    X12vec X( N32 );
     for( auto & x: X ) x.fill( 0 );
 
-    Avec A( options.N );
-    for( auto & a : A ) a.assign( options.N, 1 );
+    Avec A( N32 );
+    for( auto & a : A ) a.assign( N32, 1 );
 
-    Evec E( options.N );
+    Evec E( N32 );
     for( auto & e : E ){
-      e.resize( options.N );
+      e.resize( N32 );
       for( auto & e2 : e ){
 	e2.fill( 2 );
       }
@@ -73,22 +73,22 @@ struct GCN {
     cppflow::tensor Xtensor(
       cppflow::deduce_tf_type< float >(),
       X.data(),
-      options.N * (F+Fx) * sizeof( float ),
-      {1, options.N, F+Fx}
+      N32 * (F+Fx) * sizeof( float ),
+      {1, N32, F+Fx}
     );
 
     cppflow::tensor Atensor(
       cppflow::deduce_tf_type< float >(),
       A.data(),
-      options.N * options.N * sizeof( float ),
-      {1, options.N, options.N}
+      N32 * N32 * sizeof( float ),
+      {1, N32, N32}
     );
 
     cppflow::tensor Etensor(
       cppflow::deduce_tf_type< float >(),
       E.data(),
-      options.N * options.N * S * sizeof( float ),
-      {1, options.N, options.N, S}
+      N32 * N32 * S * sizeof( float ),
+      {1, N32, N32, S}
     );
 
     std::vector< cppflow::tensor > const output = model(
@@ -113,7 +113,7 @@ struct GCN {
   predict( GAME const & game ){
     
     Options options;
-    options.N = 32;
+    options.N = N32;
 
     Data const data = make_data(
       game.board(),
@@ -129,22 +129,22 @@ struct GCN {
     cppflow::tensor Xtensor(
       cppflow::deduce_tf_type< float >(),
       X.data(),
-      options.N * (F+Fx) * sizeof( float ),
-      {1, options.N, F+Fx}
+      N32 * (F+Fx) * sizeof( float ),
+      {1, N32, F+Fx}
     );
 
     cppflow::tensor Atensor(
       cppflow::deduce_tf_type< float >(),
       A.data(),
-      options.N * options.N * sizeof( float ),
-      {1, options.N, options.N}
+      N32 * N32 * sizeof( float ),
+      {1, N32, N32}
     );
 
     cppflow::tensor Etensor(
       cppflow::deduce_tf_type< float >(),
       E.data(),
-      options.N * options.N * S * sizeof( float ),
-      {1, options.N, options.N, S}
+      N32 * N32 * S * sizeof( float ),
+      {1, N32, N32, S}
     );
 
     std::vector< cppflow::tensor > const output = model(
@@ -214,18 +214,15 @@ struct OldSchoolGCN {
 
   void run_sanity_check(){
 
-    Options options;
-    options.N = 32;
-
-    X12vec X( options.N );
+    X12vec X( N32 );
     for( auto & x: X ) x.fill( 0 );
 
-    Avec A( options.N );
-    for( auto & a : A ) a.assign( options.N, 1 );
+    Avec A( N32 );
+    for( auto & a : A ) a.assign( N32, 1 );
 
-    Evec E( options.N );
+    Evec E( N32 );
     for( auto & e : E ){
-      e.resize( options.N );
+      e.resize( N32 );
       for( auto & e2 : e ){
 	e2.fill( 2 );
       }
@@ -241,28 +238,28 @@ struct OldSchoolGCN {
     
     {//input1
       //const float input1_row[ 3 ] = { -1, 0, 1 };
-      std::array< float, options.N * (F+Fx) > Xdata;
+      std::array< float, N32 * (F+Fx) > Xdata;
       Xdata.fill( 0.0 );
-      const float input1_row[ options.N * (F+Fx) ] = Xdata.data();
-      const int64_t input1_dims[3] = { 1, options.N, F+Fx };
-      auto input1_tensor = FloatTensor(input1_dims, 3, input1_row);
+      //const float input1_row[ N32 * (F+Fx) ] = Xdata.data();
+      const int64_t input1_dims[3] = { 1, N32, F+Fx };
+      auto input1_tensor = FloatTensor(input1_dims, 3, Xdata.data() );
 
-      TF_Operation * const op = TF_GraphOperationByName( graph_, "serving_default_X_in:0" );
-      runtime_assert( op != nullptr );
+      TF_Operation * const op = TF_GraphOperationByName( graph_, "serving_default_X_in" );
+      assert( op != nullptr );
       inputs.get()[0] = TF_Output{op, 0};
 
       input_values.get()[0] = input1_tensor;
     }
 
     {//input2
-      std::array< float, options.N * options.N > Adata;
+      std::array< float, N32 * N32 > Adata;
       Adata.fill( 1.0 );
-      const float input2_row[ options.N * options.N ] = Adata.data();
-      const int64_t input2_dims[3] = { 1, options.N, options.N };
-      auto input2_tensor = FloatTensor(input2_dims, 3, input2_row);
+      //const float input2_row[ N32 * N32 ] = Adata.data();
+      const int64_t input2_dims[3] = { 1, N32, N32 };
+      auto input2_tensor = FloatTensor(input2_dims, 3, Adata.data() );
 
-      TF_Operation * const op = TF_GraphOperationByName( graph_, "serving_default_A_in:0" );
-      runtime_assert( op != nullptr );
+      TF_Operation * const op = TF_GraphOperationByName( graph_, "serving_default_A_in" );
+      assert( op != nullptr );
       inputs.get()[1] =
 	TF_Output{op, 0};
 
@@ -270,27 +267,27 @@ struct OldSchoolGCN {
     }
 
     {//input3
-      std::array< float, options.N * options.N * S > Edata;
+      std::array< float, N32 * N32 * S > Edata;
       Edata.fill( 2.0 );
-      const float input3_row[ options.N*options.N*S ] = Edata.data();
-      const int64_t input3_dims[4] = { 1, options.N, options.N, S };
-      auto input3_tensor = FloatTensor(input3_dims, 4, input3_row);
+      //const float input3_row[ N32*N32*S ] = Edata.data();
+      const int64_t input3_dims[4] = { 1, N32, N32, S };
+      auto input3_tensor = FloatTensor(input3_dims, 4, Edata.data());
 
-      TF_Operation * const op = TF_GraphOperationByName( graph_, "serving_default_E_in:0" );
-      runtime_assert( op != nullptr );
+      TF_Operation * const op = TF_GraphOperationByName( graph_, "serving_default_E_in" );
+      assert( op != nullptr );
       inputs.get()[2] =
 	TF_Output{op, 0};
 
       input_values.get()[2] = input3_tensor;
     }
 
-    const float output_row[9] = { 0,0,0, 0,0,0, 0,0,0 };
-    const int64_t output_dims[2] = {1, 9};
-    auto output_tensor = FloatTensor( output_dims, 2, output_row );
-
     {
-      TF_Operation * const out_op = TF_GraphOperationByName( graph, output_operation.c_str() );
-      runtime_assert( out_op );
+      const float output_row[9] = { 0,0,0, 0,0,0, 0,0,0 };
+      const int64_t output_dims[2] = {1, 9};
+      auto output_tensor = FloatTensor( output_dims, 2, output_row );
+
+      TF_Operation * const out_op = TF_GraphOperationByName( graph_, "StatefulPartitionedCall" );
+      assert( out_op != nullptr );
       outputs.get()[0] =
 	TF_Output{ out_op, 0 };
 
@@ -308,6 +305,7 @@ struct OldSchoolGCN {
 
     for( uint i = 0; i < 9; ++i ){
       std::cout << "O: " << values[ i ] << std::endl;
+      assert( abs(values[ i ]-0.11111) < 0.001 );
     }
     
     TF_DeleteTensor( input_values.get()[0] );
@@ -325,7 +323,7 @@ struct OldSchoolGCN {
 
   void status_check() const {
     if (TF_GetCode( status_ ) != TF_OK) {
-      std::cout << "ERROR " << std::string(TF_Message(status)) << std::endl; 
+      std::cout << "ERROR " << std::string(TF_Message(status_)) << std::endl; 
       assert( false );
     }
   }

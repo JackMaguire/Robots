@@ -270,22 +270,6 @@ struct OldSchoolGCN {
 
   void run_sanity_check(){
 
-    /*
-    X12vec X( N32 );
-    for( auto & x: X ) x.fill( 0 );
-
-    Avec A( N32 );
-    for( auto & a : A ) a.assign( N32, 1 );
-
-    Evec E( N32 );
-    for( auto & e : E ){
-      e.resize( N32 );
-      for( auto & e2 : e ){
-	e2.fill( 2 );
-      }
-    }
-    */
-
     constexpr int ninputs = 3;
     constexpr int noutputs = 1;
 

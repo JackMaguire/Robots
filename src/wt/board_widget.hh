@@ -232,6 +232,7 @@ private:
   //GCN gcn_;
   OldSchoolGCN gcn_;
   Prediction current_prediction_;
+  bool currently_a_safe_move_ = false;
 
   Board cached_board_;
   bool display_cached_board_;
@@ -300,6 +301,8 @@ BoardWidget< GAME >::draw_foreground(
       }
     }
   }
+
+  currently_a_safe_move_ = safe_cascade_exists;
 
   if( show_ml_ and !display_cached_board_ and !safe_cascade_exists ){ // ML
     painter.setBrush( palette_.ml_brush );
@@ -405,7 +408,7 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
 
   case( 'p' ):
   case( 'P' ):
-    if( show_ml_ ){
+    if( show_ml_ && !currently_a_safe_move_ ){
       handle_move( current_prediction_.dx, current_prediction_.dy );
     }
   break;

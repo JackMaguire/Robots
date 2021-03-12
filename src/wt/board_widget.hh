@@ -14,6 +14,34 @@
 
 #include <iostream>
 #include <mutex>
+//#include <array>
+
+struct PaintPalette {
+
+  Wt::WBrush human_brush;
+  Wt::WBrush safe_human_brush;
+  Wt::WBrush robot_brush;
+  Wt::WBrush fire_brush;
+  Wt::WBrush ml_brush;
+  Wt::WBrush safety_brush;
+
+  Wt::WPen wide_pen;
+  Wt::WPen thin_pen;
+
+  PaintPalette() :
+    human_brush( Wt::WColor( 10, 100, 10 ) ),
+    safe_human_brush( Wt::WColor( 10, 200, 10 ) ),
+    robot_brush( Wt::WColor( 10, 10, 100 ) ),
+    fire_brush( Wt::WColor( 200, 10, 10 ) ),
+    ml_brush( Wt::WColor( 250, 250, 250 ) ),
+    safety_brush( Wt::WColor( 0, 0, 0 ) )
+  {
+    safety_brush.setStyle( Wt::BrushStyle::None );
+
+    wide_pen.setWidth( 1.0 );
+    thin_pen.setWidth( 0.1 );
+  }
+};
 
 template< typename GAME >
 class BoardWidget : public Wt::WPaintedWidget {//, Wt::WInteractWidget {
@@ -103,13 +131,16 @@ protected:
 
     Wt::WColor const robot_color( 10, 10, 100 );
     Wt::WColor const fire_color( 200, 10, 10 );
-    Wt::WColor const ml_color( 80, 80, 10 );
+    Wt::WColor const ml_color( 250, 250, 250 );
     Wt::WColor const safety_color( 0, 0, 0 );
 
     Wt::WBrush const robot_brush( robot_color );
     Wt::WBrush const human_brush( human_color );
     Wt::WBrush const fire_brush( fire_color );
-    Wt::WBrush const ml_brush( ml_color );
+
+    Wt::WBrush ml_brush( ml_color );
+    //ml_brush.setStyle( Wt::BrushStyle::None );
+
     Wt::WBrush safety_brush( safety_color );
     safety_brush.setStyle( Wt::BrushStyle::None );
 
@@ -151,7 +182,6 @@ protected:
 
     { // members
 
-      Wt::WPen pen;
       pen.setWidth( 0.1 );
       painter.setPen( pen );
 
@@ -165,6 +195,7 @@ protected:
 	  case( Occupant::ROBOT ): painter.setBrush( robot_brush ); break;
 	  case( Occupant::HUMAN ): painter.setBrush( human_brush ); break;
 	  case( Occupant::FIRE ):  painter.setBrush(  fire_brush ); break;
+	  case( Occupant::OOB ): break;
 	  }
 	  painter.drawEllipse( i*grid_size +1, j*grid_size +1, grid_size -2, grid_size -2 );
 	}
@@ -247,13 +278,13 @@ protected:
     case( '1' ):
       safe_mode_ = !safe_mode_;
       update();
-      sidebar_->update( game_, safe_mode_, show_safe_moves_ );
+      sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
       break;
 
     case( '2' ):
       show_safe_moves_ = !show_safe_moves_;
       update();	
-      sidebar_->update( game_, safe_mode_, show_safe_moves_ );
+      sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
       break;
 
     case( '3' ):
@@ -355,7 +386,7 @@ protected:
       }
     }
 
-    sidebar_->update( game_, safe_mode_, show_safe_moves_ );
+    sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
   }
 
 private:
@@ -364,6 +395,8 @@ private:
   int height_ = 0;
 
   std::mutex move_mutex_;
+
+  PaintPalette palette_;
 
   ScoreWidget * sidebar_;
   Wt::WApplication * app_;

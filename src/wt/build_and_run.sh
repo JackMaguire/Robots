@@ -5,8 +5,11 @@
 #ln -s ../wt/build/src/libwt.so libwt2
 #ln -s ../wt/resources/
 
-#WARN="-Wall -Wshadow -Wunused -pedantic -Wextra"
+WARN="-Wall -Wshadow -Wunused -pedantic -Wextra -Werror"
 WARN="$WARN -Wno-subobject-linkage"
 
-g++ -std=c++17 -o robots_app robots_app.cc -lwthttp -lwt -lboost_signals -Iwt_src -Iwt_build_src -Icppflow/include -Itf/include -L. -Ltf/lib -lstdc++fs -Wl,-rpath,. $WARN && \
+#DEBUG="-D_GLIBCXX_DEBUG"
+#DEBUG="$DEBUG -g"
+
+g++ -std=c++17 -o robots_app robots_app.cc -lwthttp -lwt -lboost_signals -isystem wt_src -isystem wt_build_src -isystem cppflow/include -isystem tf/include -L. -Ltf/lib -lstdc++fs -Wl,-rpath,. $WARN $DEBUG && \
     ./robots_app --docroot . --http-address 0.0.0.0 --http-port 8080

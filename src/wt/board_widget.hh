@@ -124,34 +124,12 @@ protected:
     Wt::WPainter & painter,
     int const grid_size
   ){
-  
-    Wt::WColor const human_color = ( safe_mode_ ? Wt::WColor( 10, 200, 10 ) : Wt::WColor( 10, 100, 10 ) );
-    //if ( safe_mode_ ) Wt::WColor const human_color( 10, 150, 10 );
-    //else Wt::WColor const human_color( 10, 10, 150 );
-
-    Wt::WColor const robot_color( 10, 10, 100 );
-    Wt::WColor const fire_color( 200, 10, 10 );
-    Wt::WColor const ml_color( 250, 250, 250 );
-    Wt::WColor const safety_color( 0, 0, 0 );
-
-    Wt::WBrush const robot_brush( robot_color );
-    Wt::WBrush const human_brush( human_color );
-    Wt::WBrush const fire_brush( fire_color );
-
-    Wt::WBrush ml_brush( ml_color );
-    //ml_brush.setStyle( Wt::BrushStyle::None );
-
-    Wt::WBrush safety_brush( safety_color );
-    safety_brush.setStyle( Wt::BrushStyle::None );
-
-    Wt::WPen pen;
-    pen.setWidth( 1.0 );
-    painter.setPen( pen );
+    painter.setPen( palette_.wide_pen );
     
     bool safe_cascade_exists = false;
 
     if( show_safe_moves_ ){
-      painter.setBrush( safety_brush );
+      painter.setBrush( palette_.safety_brush );
     }
 
     auto const human_p = board.human_position();
@@ -173,7 +151,7 @@ protected:
     }
 
     if( show_ml_ and !display_cached_board_ and !safe_cascade_exists ){ // ML
-      painter.setBrush( ml_brush );
+      painter.setBrush( palette_.ml_brush );
       Prediction const pred = predict( game_ );
       int const i = human_p.x + pred.dx;
       int const j = (HEIGHT-1) - (human_p.y + pred.dy);
@@ -182,8 +160,7 @@ protected:
 
     { // members
 
-      pen.setWidth( 0.1 );
-      painter.setPen( pen );
+      painter.setPen( palette_.thin_pen );
 
       Position p;
       for( int i = 0; i < WIDTH; ++i ){
@@ -191,11 +168,21 @@ protected:
 	for( int j = 0; j < HEIGHT; ++j ){
 	  p.y = (HEIGHT-1) - j;
 	  switch( board.cell( p ) ){
-	  case( Occupant::EMPTY ): continue;
-	  case( Occupant::ROBOT ): painter.setBrush( robot_brush ); break;
-	  case( Occupant::HUMAN ): painter.setBrush( human_brush ); break;
-	  case( Occupant::FIRE ):  painter.setBrush(  fire_brush ); break;
-	  case( Occupant::OOB ): break;
+	  case( Occupant::EMPTY ):
+	  case( Occupant::OOB ):
+	    continue;
+	  case( Occupant::ROBOT ):
+	    painter.setBrush( palette_.robot_brush );
+	    break;
+	  case( Occupant::HUMAN ):
+	    if( safe_mode_ )
+	      painter.setBrush( palette_.safe_human_brush );
+	    else
+	      painter.setBrush( palette_.human_brush );
+	    break;
+	  case( Occupant::FIRE ):
+	    painter.setBrush( palette_.fire_brush );
+	    break;
 	  }
 	  painter.drawEllipse( i*grid_size +1, j*grid_size +1, grid_size -2, grid_size -2 );
 	}

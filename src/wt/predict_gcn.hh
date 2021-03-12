@@ -214,6 +214,7 @@ struct OldSchoolGCN {
 
   void run_sanity_check(){
 
+    /*
     X12vec X( N32 );
     for( auto & x: X ) x.fill( 0 );
 
@@ -227,6 +228,7 @@ struct OldSchoolGCN {
 	e2.fill( 2 );
       }
     }
+    */
 
     constexpr int ninputs = 3;
     constexpr int noutputs = 1;
@@ -316,7 +318,117 @@ struct OldSchoolGCN {
 
   template< typename GAME >
   Prediction
-  predict( GAME const & ){
+  predict( GAME const & game ){
+
+    Options options;
+    options.N = N32;
+
+    Data const data = make_data(
+      game.board(),
+      game.n_safe_teleports_remaining(),
+      int(Key::S), //dummy
+      options
+    );
+
+    X12vec const X = data.mergeXs();
+    auto const & A = data.A;
+    auto const & E = data.E;
+
+
+    std::unique_ptr<TF_Output[]> inputs(new TF_Output[ninputs]);
+    std::unique_ptr<TF_Tensor *[]> input_values(new TF_Tensor *[ninputs]);
+    std::unique_ptr<TF_Output[]> outputs(new TF_Output[noutputs]);
+    std::unique_ptr<TF_Tensor *[]> output_values(new TF_Tensor *[noutputs]);
+    
+    {//input1
+      const int64_t input1_dims[3] = { 1, N32, F+Fx };
+      auto input1_tensor = FloatTensor(input1_dims, 3, &X[0][0] );
+
+      TF_Operation * const op = TF_GraphOperationByName( graph_, "serving_default_X_in" );
+      assert( op != nullptr );
+      inputs.get()[0] = TF_Output{op, 0};
+
+      input_values.get()[0] = input1_tensor;
+    }
+
+    {//input2
+      float input2_row[ N32 * N32 ];
+
+      int count = 0;
+      for( uint i = 0; i < N32; ++i ){
+	for( uint j = 0; j < N32; ++j ){
+	  input2_row[ count ] = A[ i ][ j ];
+	  ++count;
+	}
+      }
+
+      const int64_t input2_dims[3] = { 1, N32, N32 };
+      auto input2_tensor = FloatTensor(input2_dims, 3, input2_row );
+
+      TF_Operation * const op = TF_GraphOperationByName( graph_, "serving_default_A_in" );
+      assert( op != nullptr );
+      inputs.get()[1] =
+	TF_Output{op, 0};
+
+      input_values.get()[1] = input2_tensor;
+    }
+
+    {//input3
+      float input3_row[ N32*N32*S ];
+
+      int count = 0;
+      for( uint i = 0; i < N32; ++i ){
+	for( uint j = 0; j < N32; ++j ){
+	  for( uint k = 0; k < S; ++k ){
+	    input3_row[ count ] = E[ i ][ j ][ k ];
+	    ++count;
+	  }
+	}
+      }
+
+
+      const int64_t input3_dims[4] = { 1, N32, N32, S };
+      auto input3_tensor = FloatTensor(input3_dims, 4, input3_row);
+
+      TF_Operation * const op = TF_GraphOperationByName( graph_, "serving_default_E_in" );
+      assert( op != nullptr );
+      inputs.get()[2] =
+	TF_Output{op, 0};
+
+      input_values.get()[2] = input3_tensor;
+    }
+
+    {
+      const float output_row[9] = { 0,0,0, 0,0,0, 0,0,0 };
+      const int64_t output_dims[2] = {1, 9};
+      auto output_tensor = FloatTensor( output_dims, 2, output_row );
+
+      TF_Operation * const out_op = TF_GraphOperationByName( graph_, "StatefulPartitionedCall" );
+      assert( out_op != nullptr );
+      outputs.get()[0] =
+	TF_Output{ out_op, 0 };
+
+      output_values.get()[0] = output_tensor;
+    }
+
+    TF_SessionRun( session_, nullptr, inputs.get(),
+      input_values.get(), ninputs, outputs.get(),
+      output_values.get(), noutputs, nullptr, 0,
+      nullptr, status_ ); 
+
+    status_check();
+
+    float *values = static_cast<float *>(TF_TensorData(output_values.get()[0]));
+
+    for( uint i = 0; i < 9; ++i ){
+      std::cout << "O*: " << values[ i ] << std::endl;
+    }
+    
+    TF_DeleteTensor( input_values.get()[0] );
+    TF_DeleteTensor( input_values.get()[1] );
+    TF_DeleteTensor( input_values.get()[2] );
+    TF_DeleteTensor( output_values.get()[0] );
+
     Prediction p;
     return p;
   }
@@ -327,6 +439,11 @@ struct OldSchoolGCN {
       assert( false );
     }
   }
+
+private:
+
+  static constexpr int ninputs = 3;
+  static constexpr int noutputs = 1;
 
   /// @brief Status of the Tensorflow session.
   TF_Status* status_ = nullptr;

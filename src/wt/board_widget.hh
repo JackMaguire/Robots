@@ -96,6 +96,7 @@ struct PaintPalette {
   Wt::WBrush safety_brush;
 
   Wt::WPen wide_pen;
+  Wt::WPen medium_pen;
   Wt::WPen thin_pen;
 
   PaintPalette() :
@@ -109,6 +110,7 @@ struct PaintPalette {
     safety_brush.setStyle( Wt::BrushStyle::None );
 
     wide_pen.setWidth( 1.0 );
+    medium_pen.setWidth( 0.6 );
     thin_pen.setWidth( 0.1 );
   }
 };
@@ -225,7 +227,7 @@ protected:
   }
 
   void
-  loop_autopilot();
+  loop_autopilot( int tele_limit, int ms = 250 );
 
   void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
     if( display_cached_board_ == true ){
@@ -291,6 +293,7 @@ private:
   bool safe_mode_ = false;
   bool show_safe_moves_ = true;
   bool show_ml_ = false;
+  bool show_lines_ = false;
 
   bool ignore_keys_ = false;
 };
@@ -364,22 +367,26 @@ BoardWidget< GAME >::draw_foreground(
       painter.drawEllipse( i*grid_size, j*grid_size, grid_size, grid_size );
     }
 
-    //lines
-    Options options;
-    options.N = 32;
-    auto const elements = get_candidates( board, options );
-    for( uint a = 0; a < elements.size(); ++a ){
-      for( uint b = a+1; b < elements.size(); ++b ){
-	if( has_edge( elements, a, b ) ){
-	  int const i1 = elements[a].pos.x;
-	  int const j1 = (HEIGHT-1) - (elements[a].pos.y);
-	  int const i2 = elements[b].pos.x;
-	  int const j2 = (HEIGHT-1) - (elements[b].pos.y);
+    if( show_lines_ ){
+      painter.setPen( palette_.medium_pen );
 
-	  int half = grid_size / 2;
+      //lines
+      Options options;
+      options.N = 32;
+      auto const elements = get_candidates( board, options );
+      for( uint a = 0; a < elements.size(); ++a ){
+	for( uint b = a+1; b < elements.size(); ++b ){
+	  if( has_edge( elements, a, b ) ){
+	    int const i1 = elements[a].pos.x;
+	    int const j1 = (HEIGHT-1) - (elements[a].pos.y);
+	    int const i2 = elements[b].pos.x;
+	    int const j2 = (HEIGHT-1) - (elements[b].pos.y);
 
-	  painter.drawLine( i1*grid_size+half, j1*grid_size+half, i2*grid_size+half, j2*grid_size+half );
+	    int half = grid_size / 2;
 
+	    painter.drawLine( i1*grid_size+half, j1*grid_size+half, i2*grid_size+half, j2*grid_size+half );
+
+	  }
 	}
       }
     }
@@ -419,15 +426,23 @@ BoardWidget< GAME >::draw_foreground(
 
 template< typename GAME >
 void
-BoardWidget< GAME >::loop_autopilot(){
-  for( unsigned int i = 0; i < 100; ++i ) {
+BoardWidget< GAME >::loop_autopilot(
+  int const teleport_limit,
+  int const ms
+){
+  for( unsigned int i = 0; i < 300; ++i ) {
     AutoPilotResult const apr = run_autopilot( game_, current_prediction_ );
+
     handle_move( apr.dx, apr.dy,
       apr.apre == AutoPilotResultEnum::TELEPORT,
       apr.apre == AutoPilotResultEnum::CASCADE );
-    std::this_thread::sleep_for (std::chrono::milliseconds(250));
+
     this->update();
     app_->processEvents();
+
+    if( game_.n_safe_teleports_remaining() <= teleport_limit ) break;
+
+    std::this_thread::sleep_for (std::chrono::milliseconds( ms ));
   }
 }
 
@@ -502,8 +517,12 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
     }
   break;
 
+  case( '9' ):
+    if( show_ml_ ) loop_autopilot( 2 );
+  break;
+
   case( '0' ):
-    if( show_ml_ ) loop_autopilot();
+    if( show_ml_ ) loop_autopilot( -1, 100 );
   break;
 
 
@@ -539,6 +558,12 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
     update();	
     sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
     break;
+
+  case( '4' ):
+    show_lines_ = !show_lines_;
+    update();	
+    break;
+
 
   default:
     break;

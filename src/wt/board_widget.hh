@@ -15,7 +15,15 @@
 
 #include <iostream>
 #include <mutex>
+#include <string>
 //#include <array>
+
+//Logger
+#include <cstdlib> //rand()
+#include <fstream>
+#include <stdio.h>
+#include <iostream>
+#include <sstream>
 
 /*struct AutoPilotResult {
   Prediction move;
@@ -33,6 +41,33 @@ struct AutoPilotResult {
   AutoPilotResultEnum apre;
   int dx;
   int dy;
+};
+
+struct Logger {
+  std::stringstream ss;
+
+public:
+
+  ~Logger(){
+    std::string const filename =
+      "round2_data." + std::to_string( rand() );
+      std::ofstream myfile;
+      myfile.open( filename );
+      myfile << ss.str();
+      myfile.close();    
+  }
+
+  template< typename GAME >
+  void log(
+    GAME const & game,
+    Key const key
+  ){
+    ss << game.board().get_stringified_representation()
+      << ',' << game.n_safe_teleports_remaining()
+      << ',' << game.round()
+      << ',' << int( key ) << '\n';
+  }
+
 };
 
 template< typename GAME >
@@ -117,6 +152,35 @@ struct PaintPalette {
 
 template< typename GAME >
 class BoardWidget : public Wt::WPaintedWidget {//, Wt::WInteractWidget {
+private:
+  GAME game_;
+  int width_ = 0;
+  int height_ = 0;
+
+  std::mutex move_mutex_;
+
+  const PaintPalette palette_;
+
+  ScoreWidget * sidebar_;
+  Wt::WApplication * app_;
+
+  //GCN gcn_;
+  OldSchoolGCN gcn_;
+  Prediction current_prediction_;
+
+  Board cached_board_;
+  bool display_cached_board_;
+
+  bool safe_mode_ = false;
+  bool show_safe_moves_ = true;
+  bool show_ml_ = false;
+  bool show_lines_ = false;
+
+  bool ignore_keys_ = false;
+
+  Logger logger_;
+  bool dump_training_data_ = false;
+
 public:
   BoardWidget(
     ScoreWidget * sidebar,
@@ -229,11 +293,17 @@ protected:
   void
   loop_autopilot( int tele_limit, int ms = 250 );
 
-  void handle_move( int dx, int dy, bool teleport = false, bool wait = false ){
-    if( display_cached_board_ == true ){
+  bool
+  handle_move(
+    int const dx,
+    int const dy,
+    bool const teleport = false,
+    bool const wait = false
+  ){
+    if( display_cached_board_ ){
       display_cached_board_ = false;
       update();
-      return;//Don't make them make a mistake
+      return false;//Don't make them make a mistake
     }
 
     cached_board_ = game_.board();
@@ -268,34 +338,20 @@ protected:
       }
     }
 
-    sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
+    update_sidebar();
+
+    return game_over;
   }
 
-private:
-  GAME game_;
-  int width_ = 0;
-  int height_ = 0;
+  void update_sidebar(){
+    sidebar_->update(
+      game_,
+      safe_mode_,
+      show_safe_moves_,
+      show_ml_
+    );
+  }
 
-  std::mutex move_mutex_;
-
-  const PaintPalette palette_;
-
-  ScoreWidget * sidebar_;
-  Wt::WApplication * app_;
-
-  //GCN gcn_;
-  OldSchoolGCN gcn_;
-  Prediction current_prediction_;
-
-  Board cached_board_;
-  bool display_cached_board_;
-
-  bool safe_mode_ = false;
-  bool show_safe_moves_ = true;
-  bool show_ml_ = false;
-  bool show_lines_ = false;
-
-  bool ignore_keys_ = false;
 };
 
 template< typename GAME >
@@ -422,6 +478,16 @@ BoardWidget< GAME >::draw_foreground(
       }
     }
   }
+
+  if( dump_training_data_ ){
+    int const i = human_p.x;
+    int const j = (HEIGHT-1) - human_p.y;
+    if( safe_mode_ )
+      painter.setBrush( palette_.safe_human_brush );
+    else
+      painter.setBrush( palette_.human_brush );
+    painter.drawRect( i*grid_size +3, j*grid_size +3, grid_size -6, grid_size -6 );    
+  }
 }
 
 template< typename GAME >
@@ -433,12 +499,17 @@ BoardWidget< GAME >::loop_autopilot(
   for( unsigned int i = 0; i < 300; ++i ) {
     AutoPilotResult const apr = run_autopilot( game_, current_prediction_ );
 
-    handle_move( apr.dx, apr.dy,
+    bool const game_over = handle_move(
+      apr.dx,
+      apr.dy,
       apr.apre == AutoPilotResultEnum::TELEPORT,
-      apr.apre == AutoPilotResultEnum::CASCADE );
+      apr.apre == AutoPilotResultEnum::CASCADE
+    );
 
     this->update();
     app_->processEvents();
+
+    if( game_over ) break;
 
     if( game_.n_safe_teleports_remaining() <= teleport_limit ) break;
 
@@ -460,48 +531,57 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
   switch( e.charCode() ){
   case( 'q' ):
   case( 'Q' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::Q );
     handle_move( -1,  1 );
   break;
 
   case( 'w' ):
   case( 'W' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::W );
     handle_move(  0,  1 );
   break;
 
   case( 'e' ):
   case( 'E' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::E );
     handle_move(  1,  1 );
   break;
 
 
   case( 'a' ):
   case( 'A' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::A );
     handle_move( -1,  0 );
   break;
 
   case( 's' ):
   case( 'S' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::S );
     handle_move(  0,  0 );
   break;
 
   case( 'd' ):
   case( 'D' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::D );
     handle_move(  1,  0 );
   break;
 
 
   case( 'z' ):
   case( 'Z' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::Z );
     handle_move( -1, -1 );
   break;
 
   case( 'x' ):
   case( 'X' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::X );
     handle_move(  0, -1 );
   break;
 
   case( 'c' ):
   case( 'C' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::C );
     handle_move(  1, -1 );
   break;
 
@@ -528,10 +608,12 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
 
   case( 't' ):
   case( 'T' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::T );
     handle_move( -1, -1, true );
   break;
 
   case( ' ' ):
+    if( dump_training_data_ ) logger_.log( game_, Key::SPACE );
     handle_move( -1, -1, false, true );
     break;
 
@@ -544,19 +626,19 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
   case( '1' ):
     safe_mode_ = !safe_mode_;
     update();
-    sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
+    update_sidebar();
     break;
 
   case( '2' ):
     show_safe_moves_ = !show_safe_moves_;
     update();	
-    sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
+    update_sidebar();
     break;
 
   case( '3' ):
     show_ml_ = !show_ml_;
     update();	
-    sidebar_->update( game_, safe_mode_, show_safe_moves_, show_ml_ );
+    update_sidebar();
     break;
 
   case( '4' ):
@@ -564,6 +646,11 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
     update();	
     break;
 
+  case( '5' ):
+    dump_training_data_ = !dump_training_data_;
+    update();	
+    update_sidebar();
+    break;
 
   default:
     break;

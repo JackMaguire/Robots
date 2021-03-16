@@ -50,7 +50,7 @@ public:
 
   ~Logger(){
     std::string const filename =
-      "round2_data." + std::to_string( rand() );
+      "round2_data/" + std::to_string( rand() );
       std::ofstream myfile;
       myfile.open( filename );
       myfile << ss.str();
@@ -597,12 +597,16 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
     }
   break;
 
+  case( '8' ):
+    if( show_ml_ ) loop_autopilot( 4, 0 );
+  break;
+
   case( '9' ):
-    if( show_ml_ ) loop_autopilot( 2 );
+    if( show_ml_ ) loop_autopilot( 2, 0 );
   break;
 
   case( '0' ):
-    if( show_ml_ ) loop_autopilot( -1, 100 );
+    if( show_ml_ ) loop_autopilot( -1, 0 );
   break;
 
 

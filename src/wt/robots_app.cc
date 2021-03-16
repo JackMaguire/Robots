@@ -13,7 +13,8 @@
 
 using namespace Wt;
 
-using MyBoardWidget = BoardWidget< RobotsGame< NullVisualizer, true, 100 > >;
+//using MyBoardWidget = BoardWidget< RobotsGame< NullVisualizer, true, 100 > >;
+using MyBoardWidget = BoardWidget< RobotsGame< NullVisualizer, true, 0 > >;
 
 std::unique_ptr< Wt::WApplication >
 createApplication( Wt::WEnvironment const & env ) {

@@ -51,10 +51,15 @@ public:
   ~Logger(){
     std::string const filename =
       "round2_data/" + std::to_string( rand() );
+
+    std::string const data = ss.str();
+
+    if( ! data.empty() ){
       std::ofstream myfile;
       myfile.open( filename );
-      myfile << ss.str();
+      myfile << data;
       myfile.close();    
+    }
   }
 
   template< typename GAME >

@@ -92,6 +92,7 @@ parse_int( int const command ){
 
 struct Options {
   unsigned int N;
+  unsigned int round;
 };
 
 struct NodeCandidate {
@@ -210,7 +211,7 @@ get_top_candidates( Board const & board, Options const & options ){
 using Forecasts = std::array< std::array< ForecastResults, 3 >, 3 >;
 
 constexpr int F = 3;
-constexpr int Fx = 3;
+constexpr int Fx = 4;
 constexpr int S = 5;
 
 // X: (N,F)
@@ -329,8 +330,11 @@ calcFx(
   unsigned int const i,
   Forecasts const & forecasts,
   Board const & board,
-  int const n_safe_tele
+  int const n_safe_tele,
+  Options const & options
 ){
+  assert( options.round == 2 );
+  
   std::array< float, Fx > values = {}; //zero initialized
 
   constexpr float CARDINAL = 1.0;
@@ -348,6 +352,7 @@ calcFx(
     auto const n_robots = n_robots_in_corner< -1, 1 >( board );
     values[ 1 ] = transform( n_robots );
     values[ 2 ] = forecasts[ 0 ][ 2 ].legal ? 1.0 : 0.0;
+    values[ 3 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;	
     return values;
   }
 
@@ -355,7 +360,8 @@ calcFx(
     values[ 0 ] = CARDINAL;
     auto const n_robots = n_robots_in_line< 0, 1 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 1 ][ 2 ].legal ? 1.0 : 0.0;    
+    values[ 2 ] = forecasts[ 1 ][ 2 ].legal ? 1.0 : 0.0;
+    values[ 3 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
     return values;
   }
 
@@ -363,7 +369,8 @@ calcFx(
     values[ 0 ] = DIAGONAL;
     auto const n_robots = n_robots_in_corner< 1, 1 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 2 ][ 2 ].legal ? 1.0 : 0.0;    
+    values[ 2 ] = forecasts[ 2 ][ 2 ].legal ? 1.0 : 0.0;
+    values[ 3 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
     return values;
   }
 
@@ -371,14 +378,16 @@ calcFx(
     values[ 0 ] = CARDINAL;
     auto const n_robots = n_robots_in_line< -1, 0 >( board );
     values[ 1 ] = transform( n_robots );
-    values[ 2 ] = forecasts[ 0 ][ 1 ].legal ? 1.0 : 0.0;    
+    values[ 2 ] = forecasts[ 0 ][ 1 ].legal ? 1.0 : 0.0;
+    values[ 3 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
     return values;
   }
 
   if( i == 4 ){ //S
     values[ 0 ] = 0;
-    values[ 1 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
+    values[ 1 ] = 0;
     values[ 2 ] = forecasts[ 1 ][ 1 ].legal ? 1.0 : 0.0;    
+    values[ 3 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
     return values;
   }
 
@@ -387,6 +396,7 @@ calcFx(
     auto const n_robots = n_robots_in_line< 1, 0 >( board );
     values[ 1 ] = transform( n_robots );
     values[ 2 ] = forecasts[ 2 ][ 1 ].legal ? 1.0 : 0.0;    
+    values[ 3 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
     return values;
   }
 
@@ -395,6 +405,7 @@ calcFx(
     auto const n_robots = n_robots_in_corner< -1, -1 >( board );
     values[ 1 ] = transform( n_robots );
     values[ 2 ] = forecasts[ 0 ][ 0 ].legal ? 1.0 : 0.0;    
+    values[ 3 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
     return values;
   }
 
@@ -403,6 +414,7 @@ calcFx(
     auto const n_robots = n_robots_in_line< 0, -1 >( board );
     values[ 1 ] = transform( n_robots );
     values[ 2 ] = forecasts[ 1 ][ 0 ].legal ? 1.0 : 0.0;    
+    values[ 3 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
     return values;
   }
 
@@ -411,6 +423,7 @@ calcFx(
     auto const n_robots = n_robots_in_corner< 1, -1 >( board );
     values[ 1 ] = transform( n_robots );
     values[ 2 ] = forecasts[ 2 ][ 0 ].legal ? 1.0 : 0.0;    
+    values[ 3 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
     return values;
   }
 
@@ -421,12 +434,16 @@ bool
 has_edge(
   std::vector< NodeCandidate > const & all_elements,
   unsigned int const i,
-  unsigned int const j
+  unsigned int const j,
+  Options const & options
 ){
   if( all_elements[ i ].occ == Occupant::HUMAN ) return true;
   if( all_elements[ j ].occ == Occupant::HUMAN ) return true;
-  if( all_elements[ i ].occ == Occupant::EMPTY ) return true;
-  if( all_elements[ j ].occ == Occupant::EMPTY ) return true;
+  
+  if( options.round != 1 ){
+    if( all_elements[ i ].occ == Occupant::EMPTY ) return true;
+    if( all_elements[ j ].occ == Occupant::EMPTY ) return true;
+  }
 
   constexpr double distance_cutoff = 7.5;
   auto const dist = all_elements[ i ].pos.distance( all_elements[ j ].pos );
@@ -583,7 +600,7 @@ make_data(
     data.X[ i ] = calcF( all_elements[ i ] );
 
     if( i < 9 ){
-      data.X2[ i ] = calcFx( i, forecasts, b, n_safe_tele );
+      data.X2[ i ] = calcFx( i, forecasts, b, n_safe_tele, options );
       //std::cout << "??? " << data.X2[ i ][ 2 ] << std::endl;
     } else {
       std::fill( data.X2[ i ].begin(), data.X2[ i ].end(), -5 );

@@ -11,11 +11,17 @@ namespace p = boost::python;
 namespace np = boost::python::numpy;
 
 boost::python::tuple
-generate_data_from_str( std::string const str, unsigned int const N ){
+generate_data_from_str
+(
+ std::string const str,
+ unsigned int const N,
+ unsigned int const round
+ )
+{
   np::dtype const dtype = np::dtype::get_builtin<float>();
   try {
 
-    Options const options = { N };
+    Options const options = { N, round };
     Data const d = make_data( str, options );
 
   

@@ -425,6 +425,8 @@ has_edge(
 ){
   if( all_elements[ i ].occ == Occupant::HUMAN ) return true;
   if( all_elements[ j ].occ == Occupant::HUMAN ) return true;
+  if( all_elements[ i ].occ == Occupant::EMPTY ) return true;
+  if( all_elements[ j ].occ == Occupant::EMPTY ) return true;
 
   constexpr double distance_cutoff = 7.5;
   auto const dist = all_elements[ i ].pos.distance( all_elements[ j ].pos );

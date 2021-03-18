@@ -343,12 +343,109 @@ struct GCNFormulation {
 		int const n_safe_tele
 		)
   {
+    if( ROUND == 1 )
+      return calcFx_round1( i, forecasts, board, n_safe_tele );
     if( ROUND == 2 )
       return calcFx_round2( i, forecasts, board, n_safe_tele );
     
     assert( false );
   }
 
+  static
+  std::array< float, Fx >
+  calcFx_round1
+  (
+   unsigned int const i,
+   Forecasts const & forecasts,
+   Board const & board,
+   int const n_safe_tele
+   ){
+    std::array< float, Fx > values = {}; //zero initialized
+    
+    constexpr float CARDINAL = 1.0;
+    constexpr float DIAGONAL = -1.0;
+
+    auto && transform =
+      []( int const n_robots ) -> float {
+	auto const trans = ( n_robots > 0 ? log( n_robots ) : -1.0 );
+	//std::cout << "!!!" << n_robots << " " << trans << std::endl;
+	return trans;
+      };
+
+    if( i == 0 ){ //Q
+      values[ 0 ] = DIAGONAL;
+      auto const n_robots = n_robots_in_corner< -1, 1 >( board );
+      values[ 1 ] = transform( n_robots );
+      values[ 2 ] = forecasts[ 0 ][ 2 ].legal ? 1.0 : 0.0;
+      return values;
+    }
+
+    if( i == 1 ){ //W
+      values[ 0 ] = CARDINAL;
+      auto const n_robots = n_robots_in_line< 0, 1 >( board );
+      values[ 1 ] = transform( n_robots );
+      values[ 2 ] = forecasts[ 1 ][ 2 ].legal ? 1.0 : 0.0;    
+      return values;
+    }
+
+    if( i == 2 ){ //E
+      values[ 0 ] = DIAGONAL;
+      auto const n_robots = n_robots_in_corner< 1, 1 >( board );
+      values[ 1 ] = transform( n_robots );
+      values[ 2 ] = forecasts[ 2 ][ 2 ].legal ? 1.0 : 0.0;    
+      return values;
+    }
+
+    if( i == 3 ){ //A
+      values[ 0 ] = CARDINAL;
+      auto const n_robots = n_robots_in_line< -1, 0 >( board );
+      values[ 1 ] = transform( n_robots );
+      values[ 2 ] = forecasts[ 0 ][ 1 ].legal ? 1.0 : 0.0;    
+      return values;
+    }
+
+    if( i == 4 ){ //S
+      values[ 0 ] = 0;
+      values[ 1 ] = ( float(n_safe_tele) - 5.0 ) / 2.0;
+      values[ 2 ] = forecasts[ 1 ][ 1 ].legal ? 1.0 : 0.0;    
+      return values;
+    }
+
+    if( i == 5 ){ //D
+      values[ 0 ] = CARDINAL;
+      auto const n_robots = n_robots_in_line< 1, 0 >( board );
+      values[ 1 ] = transform( n_robots );
+      values[ 2 ] = forecasts[ 2 ][ 1 ].legal ? 1.0 : 0.0;    
+      return values;
+    }
+
+    if( i == 6 ){ //Z
+      values[ 0 ] = DIAGONAL;
+      auto const n_robots = n_robots_in_corner< -1, -1 >( board );
+      values[ 1 ] = transform( n_robots );
+      values[ 2 ] = forecasts[ 0 ][ 0 ].legal ? 1.0 : 0.0;    
+      return values;
+    }
+
+    if( i == 7 ){ //X
+      values[ 0 ] = CARDINAL;
+      auto const n_robots = n_robots_in_line< 0, -1 >( board );
+      values[ 1 ] = transform( n_robots );
+      values[ 2 ] = forecasts[ 1 ][ 0 ].legal ? 1.0 : 0.0;    
+      return values;
+    }
+
+    if( i == 8 ){ //C
+      values[ 0 ] = DIAGONAL;
+      auto const n_robots = n_robots_in_corner< 1, -1 >( board );
+      values[ 1 ] = transform( n_robots );
+      values[ 2 ] = forecasts[ 2 ][ 0 ].legal ? 1.0 : 0.0;    
+      return values;
+    }
+
+    return values;
+  }
+  
   static
   std::array< float, Fx >
   calcFx_round2(

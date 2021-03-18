@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cppflow/ops.h>
-#include <cppflow/model.h>
-
 #include <iostream>
 #include "robots.hh"
 #include "gcn.hh"
@@ -70,164 +67,12 @@ argmax2pred( int const argmax ){
   return pred;
 }
 
-struct GCN {
-  GCN() :
-    model("/saved_models/2BM.6")
-  {
-    /*
-    for ( std::string const & s : model.get_operations() ){
-      //std::cout << s << std::endl;
-      //show_shape( s );
-    }
-
-    auto Xshape = model.get_operation_shape( "serving_default_X_in" );
-    for ( auto const x : Xshape ){
-      //std::cout << "X " << x << std::endl;
-    }
-
-    auto Ashape = model.get_operation_shape( "serving_default_A_in" );
-    for ( auto const x : Ashape ){
-      //std::cout << "A " << x << std::endl;
-    }
-
-    auto Eshape = model.get_operation_shape( "serving_default_E_in" );
-    for ( auto const x : Eshape ){
-      //std::cout << "E " << x << std::endl;
-    }
-    */
-
-    /*auto Oshape = model.get_operation_shape( "StatefulPartitionedCall:0" );
-    for ( auto const x : Oshape ){
-      //std::cout << "O " << x << std::endl;
-    }*/
-
-    run_sanity_check();
-  }
-
-  void show_shape( std::string const & ) const {
-    //auto shape = model.get_operation_shape( op );
-    /*for ( auto const x : shape ){
-      fg
-      std::cout << op << " " << x << std::endl;
-    } */   
-  }
-
-  void
-  run_sanity_check(){
-
-    X12vec X( N32 );
-    for( auto & x: X ) x.fill( 0 );
-
-    Avec A( N32 );
-    for( auto & a : A ) a.assign( N32, 1 );
-
-    Evec E( N32 );
-    for( auto & e : E ){
-      e.resize( N32 );
-      for( auto & e2 : e ){
-	e2.fill( 2 );
-      }
-    }
-
-    cppflow::tensor Xtensor(
-      cppflow::deduce_tf_type< float >(),
-      X.data(),
-      N32 * (F+Fx) * sizeof( float ),
-      {1, N32, F+Fx}
-    );
-
-    cppflow::tensor Atensor(
-      cppflow::deduce_tf_type< float >(),
-      A.data(),
-      N32 * N32 * sizeof( float ),
-      {1, N32, N32}
-    );
-
-    cppflow::tensor Etensor(
-      cppflow::deduce_tf_type< float >(),
-      E.data(),
-      N32 * N32 * S * sizeof( float ),
-      {1, N32, N32, S}
-    );
-
-    std::vector< cppflow::tensor > const output = model(
-      {
-	{"serving_default_X_in:0", Xtensor},
-	  {"serving_default_A_in:0", Atensor},
-	    {"serving_default_E_in:0", Etensor},
-	      },
-      {"StatefulPartitionedCall:0"});
-      //{"conv1d_1/bias/v/Read/ReadVariableOp:0"});
-
-    //std::cout << "output.size() " << output.size() << std::endl;
-    assert( output.size() == 1 );
-    for( auto o : output[0].get_data< float >() ){
-      assert( abs(o-0.11111) < 0.001 );
-      //std::cout << "O: " << o << std::endl;
-    }
-  }
-
-  template< typename GAME >
-  Prediction
-  predict( GAME const & game ){
-    
-    Options options;
-    options.N = N32;
-
-    Data const data = make_data(
-      game.board(),
-      game.n_safe_teleports_remaining(),
-      int(Key::S), //dummy
-      options
-    );
-
-    X12vec const X = data.mergeXs();
-    auto const & A = data.A;
-    auto const & E = data.E;
-
-    cppflow::tensor Xtensor(
-      cppflow::deduce_tf_type< float >(),
-      X.data(),
-      N32 * (F+Fx) * sizeof( float ),
-      {1, N32, F+Fx}
-    );
-
-    cppflow::tensor Atensor(
-      cppflow::deduce_tf_type< float >(),
-      A.data(),
-      N32 * N32 * sizeof( float ),
-      {1, N32, N32}
-    );
-
-    cppflow::tensor Etensor(
-      cppflow::deduce_tf_type< float >(),
-      E.data(),
-      N32 * N32 * S * sizeof( float ),
-      {1, N32, N32, S}
-    );
-
-    std::vector< cppflow::tensor > const output = model(
-      {
-	{"serving_default_X_in:0", Xtensor},
-	  {"serving_default_A_in:0", Atensor},
-	    {"serving_default_E_in:0", Etensor},
-	      },
-      {"StatefulPartitionedCall:0"});
-
-    //std::cout << "output.size() " << output.size() << std::endl;
-    assert( output.size() == 1 );
-    for( auto o : output[0].get_data< float >() ){
-      //std::cout << "O: " << o << std::endl;
-    }
-    
-    Prediction pred;
-    return pred;
-  }
-
-  cppflow::model model;
-};
-
-TF_Tensor *FloatTensor(const int64_t *dims, int num_dims, const float *values) {
+TF_Tensor
+*FloatTensor(
+  int64_t const * dims,
+  int const num_dims,
+  float const * values
+) {
   int64_t num_values = 1;
 
   for (int i = 0; i < num_dims; ++i) {

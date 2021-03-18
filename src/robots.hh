@@ -50,9 +50,7 @@ enum class MoveResult
 
 
 struct Position {
-
-  // auto operator<=>(const Position&) const = default;
-
+  
   bool operator==( Position const & o ) const {
     return x == o.x && y == o.y;
   }
@@ -142,8 +140,15 @@ public:
   move_human( int const dx, int const dy );
 
   bool
+  move_is_safe( int const dx, int const dy ) const;
+
+  bool
   move_is_cascade_safe( int const dx, int const dy ) const;
 
+  bool
+  move_is_cascade_safe( int const dx, int const dy, int & n_robots_remaining ) const;
+
+  __attribute__((unused))  
   std::string
   get_stringified_representation() const;
 
@@ -272,7 +277,7 @@ public:
     } else {
       board_.init( ++round_ );
       if( GO_HUMAN_SPEED ){
-	std::this_thread::sleep_for (std::chrono::seconds(1));
+	std::this_thread::sleep_for (std::chrono::milliseconds(sleepsize));
       }
       Visualizer::show( board_ );    
     }
@@ -578,7 +583,7 @@ Board::init( int const round ){
     std::mt19937 g( rd() );
     std::shuffle( empty_positions.begin(), empty_positions.end(), g );
 
-    for( int i = 0; i < robot_positions_.size(); ++i ){
+    for( unsigned int i = 0; i < robot_positions_.size(); ++i ){
       robot_positions_[ i ] = empty_positions[ i ];
       cell( robot_positions_[ i ] ) = Occupant::ROBOT;
     }
@@ -605,7 +610,7 @@ Board::move_robots_1_step(
   //elements are indices in robot_positions_
   std::array< std::array< int, HEIGHT >, WIDTH > robot_indices;
 
-  for( int r = 0; r < robot_positions_.size(); ++r ){
+  for( unsigned int r = 0; r < robot_positions_.size(); ++r ){
     Position & pos = robot_positions_[ r ];
 
     if( human_position_.x < pos.x ) pos.x -= 1;
@@ -677,6 +682,13 @@ Board::move_human( int const dx, int const dy ) {
 }
 
 bool
+Board::move_is_safe( int const dx, int const dy ) const {
+  Board copy = (*this);
+  MoveResult const result = copy.move_human( dx, dy );
+  return result != MoveResult::YOU_LOSE;
+}
+
+bool
 Board::move_is_cascade_safe( int const dx, int const dy ) const {
   Board copy = (*this);
   MoveResult result = copy.move_human( dx, dy );
@@ -685,6 +697,22 @@ Board::move_is_cascade_safe( int const dx, int const dy ) const {
   }
   return result != MoveResult::YOU_LOSE;
 }
+
+bool
+Board::move_is_cascade_safe(
+  int const dx,
+  int const dy,
+  int & nremaining
+) const {
+  Board copy = (*this);
+  MoveResult result = copy.move_human( dx, dy );
+  while ( result == MoveResult::CONTINUE ){
+    result = copy.move_human( 0, 0 );
+  }
+  nremaining = copy.n_robots();
+  return result != MoveResult::YOU_LOSE;
+}
+
 
 std::string
 Board::get_stringified_representation() const {
@@ -729,6 +757,7 @@ Board::load_from_stringified_representation( std::string const & str ) {
   }//x
 }
 
+__attribute__((unused))
 std::string
 Board::get_safe_moves() const {
   std::stringstream ss;

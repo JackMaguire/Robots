@@ -30,13 +30,29 @@ public:
 	 display_controls();
        }
        );
+
+    safe_ = elementAt(3, 0)->addNew< Wt::WLineEdit >( "Safe Mode: off" );
+    safe_->setReadOnly( true );
+
+    scout_ = elementAt(4, 0)->addNew< Wt::WLineEdit >( "Scout Mode: on" );
+    scout_->setReadOnly( true );
+
+    ml_ = elementAt(5, 0)->addNew< Wt::WLineEdit >( "ML Mode: off" );
+    ml_->setReadOnly( true );
   }
 
   void display_controls(){
     Wt::WMessageBox * const messageBox = this->addChild(
       Wt::cpp14::make_unique< Wt::WMessageBox >(
 	"Controls",
-	"<p>Move: QWEASDZXC</p><p>Teleport: T</p><p>Wait: SpaceBar</p><p>See Last State: '?'</p><p>Sometimes you need to click on the board for it to start listening to your keys</p>",
+	"<p>Move: QWEASDZXC</p>"
+	"<p>Teleport: T</p>"
+	"<p>Wait: SpaceBar</p>"
+	"<p>See Last State: '?'</p>"
+	"<p>Toggle Safe Mode: '1' (human will be lighter green in safe mode)</p>"
+	"<p>Toggle Scout Mode: '2'</p>"
+	"<p>Toggle ML Mode: '3'</p>"
+	"<p>Sometimes you need to click on the board for it to start listening to your keys</p>",
 	Wt::Icon::Warning, Wt::StandardButton::Yes //| Wt::StandardButton::No
       )
     );
@@ -51,12 +67,19 @@ public:
   }
 
   
-  void update( RobotsGame<> const & game  ){
+  template< typename GAME >
+  void update( GAME const & game, bool const safe_mode, bool const scout_mode, bool const ml_mode  ){
     score_->setText( "Score: " + std::to_string( game.score() ) );
     tele_->setText( "Teleports: " + std::to_string( game.n_safe_teleports_remaining()));
+    safe_->setText( "Safe Mode: " + std::string(safe_mode?"on":"off") );
+    scout_->setText( "Scout Mode: " + std::string(scout_mode?"on":"off") );
+    ml_->setText( "ML Mode: " + std::string(ml_mode?"on":"off") );
   }
 
 private:
   Wt::WLineEdit * score_;
   Wt::WLineEdit * tele_;
+  Wt::WLineEdit * safe_;
+  Wt::WLineEdit * scout_;
+  Wt::WLineEdit * ml_;
 };

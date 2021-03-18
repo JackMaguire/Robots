@@ -1,3 +1,5 @@
+#pragma once
+
 // g++ gcn.cc -std=c++2a -o gcn -Wall -pedantic -Wshadow
 // g++ gcn.cc -std=c++2a -o gcn -Wall -pedantic -Wshadow -g -D_GLIBCXX_DEBUG
 
@@ -20,6 +22,16 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+
+#include <exception>
+
+struct IllegalMoveException : public std::exception
+{
+  IllegalMoveException(){
+    std::cout << "Bad Move!" << std::endl;
+  }
+
+};
 
 constexpr int Q_key = 113;  //
 constexpr int W_key = 119; //capitol is 87
@@ -79,7 +91,7 @@ parse_int( int const command ){
 }
 
 struct Options {
-  int N;
+  unsigned int N;
 };
 
 struct NodeCandidate {
@@ -130,10 +142,30 @@ get_top_candidates( Board const & board, Options const & options ){
   Position const human_position = board.human_position();
 
   //Do the 4 OOB:
-  all.emplace_back( -1, human_position.y,     Occupant::OOB, human_position );
-  all.emplace_back( WIDTH, human_position.y,  Occupant::OOB, human_position );
-  all.emplace_back( human_position.x, -1,     Occupant::OOB, human_position );
-  all.emplace_back( human_position.x, HEIGHT, Occupant::OOB, human_position );
+  {
+    Position const p({ -1, human_position.y });
+    if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
+      all.emplace_back( p, Occupant::OOB, human_position ); 
+    }
+  }
+  {
+    Position const p({ WIDTH, human_position.y });
+    if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
+      all.emplace_back( p, Occupant::OOB, human_position ); 
+    }
+  }
+  {
+    Position const p({ human_position.x, -1 });
+    if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
+      all.emplace_back( p, Occupant::OOB, human_position ); 
+    }
+  }
+  {
+    Position const p({ human_position.x, HEIGHT });
+    if( abs( p.x - human_position.x ) > 1 || abs( p.y - human_position.y ) > 1 ){
+      all.emplace_back( p, Occupant::OOB, human_position ); 
+    }
+  }
   
   int nskipped = 0;
   Position p;
@@ -159,14 +191,15 @@ get_top_candidates( Board const & board, Options const & options ){
     }
   }
 
-  assert( nskipped == 9 );
+  assert( nskipped >= 4 );
+  assert( nskipped <= 9 );
 
   std::sort( all.begin(), all.end(), 
     []( NodeCandidate const & a, NodeCandidate const & b ) -> bool { 
       return a.distance < b.distance; 
     });
 
-  int const max_size = options.N - 9;
+  unsigned int const max_size = options.N - 9;
   if( all.size() > max_size ){
     all.resize( max_size );
   }
@@ -186,6 +219,8 @@ using Xvec = std::vector< std::array< float, F > >;
 // X: (N,Fx)
 using X2vec = std::vector< std::array< float, Fx > >;
 
+using X12vec = std::vector< std::array< float, F + Fx > >;
+
 // A: (N,N)
 using Avec = std::vector< std::vector< float > >;
 
@@ -201,10 +236,24 @@ struct Data {
   Avec A;
   Evec E;
   Ovec out;
+
+  X12vec mergeXs() const {
+    X12vec combinedX;
+    combinedX.resize( X.size() );
+    for( uint i = 0; i < X.size(); ++i ){
+      for( uint j = 0; j < F; ++j ){
+	combinedX[ i ][ j ] = X[ i ][ j ];
+      }
+      for( uint j = 0; j < Fx; ++j ){
+	combinedX[ i ][ F+j ] = X2[ i ][ j ];
+      }      
+    }
+    return combinedX;
+  }
 };
 
 std::array< float, F >
-calcF( unsigned int const i, NodeCandidate const & c, Forecasts const & forecasts ){
+calcF( NodeCandidate const & c ){
   std::array< float, F > values; //zero initialized
   switch( c.occ ) {
     case Occupant::EMPTY:
@@ -278,12 +327,11 @@ n_robots_in_line( Board const & board ) {
 std::array< float, Fx >
 calcFx(
   unsigned int const i,
-  NodeCandidate const & c,
   Forecasts const & forecasts,
   Board const & board,
   int const n_safe_tele
 ){
-  std::array< float, Fx > values; //zero initialized
+  std::array< float, Fx > values = {}; //zero initialized
 
   constexpr float CARDINAL = 1.0;
   constexpr float DIAGONAL = -1.0;
@@ -291,7 +339,7 @@ calcFx(
   auto && transform =
     []( int const n_robots ) -> float {
       auto const trans = ( n_robots > 0 ? log( n_robots ) : -1.0 );
-      std::cout << "!!!" << n_robots << " " << trans << std::endl;
+      //std::cout << "!!!" << n_robots << " " << trans << std::endl;
       return trans;
     };
 
@@ -431,29 +479,30 @@ zero_out( T & t ){
   std::fill( t.begin(), t.end(), 0 );
 }
 
+std::vector< NodeCandidate >
+get_candidates(
+  Board const & b,
+  Options const & options
+){  
+  std::vector< NodeCandidate > local_candidates = get_local_candidates( b );
+  std::vector< NodeCandidate > far_candidates = get_top_candidates( b, options );
+  std::vector< NodeCandidate > all_elements_i;
+  all_elements_i.reserve( options.N );
+  all_elements_i.insert( all_elements_i.end(),
+    local_candidates.begin(), local_candidates.end() );
+  all_elements_i.insert( all_elements_i.end(),
+    far_candidates.begin(), far_candidates.end() );
+  return all_elements_i;
+}
+
+
 Data
-make_data( std::string const & line, Options const & options ){
-
-  //example input line:
-  //000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000010030000000000000000000003011100000000000000000000000001100030000000000000000000000000000000000000000000000000000000000001000300000000000000000001000301000000000000000000000003000103100000000000000000000312110133130000000000000000000003000000001000000000000000000000000000000000000000000000000001100000000000000000000000000001010000330000000000003000000000000300300000000000000000000303300000300033000000000000000001011000301000000000000000000001000000000000000000000000000001010100131000000000000000000001000100300000000000000000000001000000330000000000000000000011000100001000000000000000000000100000031000000000000000000000000101000000000000000000000000100000000000000000000000000001000100300000000000000000000000000000100000000000000000000013000000301000000000000000000000000000110000000000000000000001000100000000000000000000000001010000000000000000000000000003000100310000000000000000000001000100000000000000000000000001000101310000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000000000000000,6,17,10
-  //Board,tele,level,move
-
-  std::vector< std::string > tokens;
-  std::stringstream ss( line );
-  while( ss.good() ){
-    std::string substr;
-    std::getline( ss, substr, ',' );
-    tokens.push_back( substr );
-  }
-
-  if( tokens.size() != 4 ){
-    assert( false );
-  }
-
-  int const n_safe_tele = std::stoi( tokens[1] );
-
-  Board b;
-  b.load_from_stringified_representation( tokens[0] );
+make_data(
+  Board const & b,
+  int const n_safe_tele,
+  int const move,
+  Options const & options
+){
 
   std::array< std::array< ForecastResults, 3 >, 3 > const forecasts =
     forcast_all_moves( b );
@@ -473,48 +522,48 @@ make_data( std::string const & line, Options const & options ){
     e.resize( options.N );
   zero_out( data.out );
 
-  int const move = std::stoi( tokens[3] );
   switch( move ){
   case int( Key::NONE ):
+    break;
   case int( Key::T ):
   case int( Key::SPACE ):
   case int( Key::DELETE ):
   case int( Key::R ):
     assert( false );
   case int( Key::Q ):
-    assert( forecasts[ 0 ][ 2 ].legal );
+    if( ! forecasts[ 0 ][ 2 ].legal ) throw IllegalMoveException();
     data.out[ 0 ] = 1.0;
     break;
   case int( Key::W ):
-    assert( forecasts[ 1 ][ 2 ].legal );
+    if( ! forecasts[ 1 ][ 2 ].legal ) throw IllegalMoveException();
     data.out[ 1 ] = 1.0;
     break;
   case int( Key::E ):
-    assert( forecasts[ 2 ][ 2 ].legal );
+    if( ! forecasts[ 2 ][ 2 ].legal ) throw IllegalMoveException();
     data.out[ 2 ] = 1.0;
     break;
   case int( Key::A ):
-    assert( forecasts[ 0 ][ 1 ].legal );
+    if( ! forecasts[ 0 ][ 1 ].legal ) throw IllegalMoveException();
     data.out[ 3 ] = 1.0;
     break;
   case int( Key::S ):
-    assert( forecasts[ 1 ][ 1 ].legal );
+    if( ! forecasts[ 1 ][ 1 ].legal ) throw IllegalMoveException();
     data.out[ 4 ] = 1.0;
     break;
   case int( Key::D ):
-    assert( forecasts[ 2 ][ 1 ].legal );
+    if( ! forecasts[ 2 ][ 1 ].legal ) throw IllegalMoveException();
     data.out[ 5 ] = 1.0;
     break;
   case int( Key::Z ):
-    assert( forecasts[ 0 ][ 0 ].legal );
+    if( ! forecasts[ 0 ][ 0 ].legal ) throw IllegalMoveException();
     data.out[ 6 ] = 1.0;
     break;
   case int( Key::X ):
-    assert( forecasts[ 1 ][ 0 ].legal );
+    if( ! forecasts[ 1 ][ 0 ].legal ) throw IllegalMoveException();
     data.out[ 7 ] = 1.0;
     break;
   case int( Key::C ):
-    assert( forecasts[ 2 ][ 0 ].legal );
+    if( ! forecasts[ 2 ][ 0 ].legal ) throw IllegalMoveException();
     data.out[ 8 ] = 1.0;
     break;
   default:
@@ -523,25 +572,19 @@ make_data( std::string const & line, Options const & options ){
 
   
   std::vector< NodeCandidate > const all_elements =
-    [&](){
-      std::vector< NodeCandidate > local_candidates = get_local_candidates( b );
-      std::vector< NodeCandidate > far_candidates = get_top_candidates( b, options );
-      std::vector< NodeCandidate > all_elements;
-      all_elements.reserve( options.N );
-      all_elements.insert( all_elements.end(),
-	local_candidates.begin(), local_candidates.end() );
-      all_elements.insert( all_elements.end(),
-	far_candidates.begin(), far_candidates.end() );
-      return all_elements;
-    }();
-  
+    get_candidates( b, options );
+
   for( unsigned int i = 0; i < all_elements.size(); ++i ){
+    //std::cout << "Element " << i << " " << all_elements[i].pos.x << " " << " " << all_elements[i].pos.y	<< " " << int(all_elements[i].occ) << " " << all_elements[i].distance << std::endl;
+    
     //X
-    data.X[ i ] = calcF( i, all_elements[ i ], forecasts );
+    data.X[ i ] = calcF( all_elements[ i ] );
 
     if( i < 9 ){
-      data.X2[ i ] = calcFx( i, all_elements[ i ], forecasts, b, n_safe_tele );
+      data.X2[ i ] = calcFx( i, forecasts, b, n_safe_tele );
       //std::cout << "??? " << data.X2[ i ][ 2 ] << std::endl;
+    } else {
+      std::fill( data.X2[ i ].begin(), data.X2[ i ].end(), -5 );
     }
 
     for( unsigned int j = i+1; j < all_elements.size(); ++j ){
@@ -559,6 +602,33 @@ make_data( std::string const & line, Options const & options ){
   }
 
   return data;
+}
+
+Data
+make_data( std::string const & line, Options const & options ){
+  //example input line:
+  //000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000010030000000000000000000003011100000000000000000000000001100030000000000000000000000000000000000000000000000000000000000001000300000000000000000001000301000000000000000000000003000103100000000000000000000312110133130000000000000000000003000000001000000000000000000000000000000000000000000000000001100000000000000000000000000001010000330000000000003000000000000300300000000000000000000303300000300033000000000000000001011000301000000000000000000001000000000000000000000000000001010100131000000000000000000001000100300000000000000000000001000000330000000000000000000011000100001000000000000000000000100000031000000000000000000000000101000000000000000000000000100000000000000000000000000001000100300000000000000000000000000000100000000000000000000013000000301000000000000000000000000000110000000000000000000001000100000000000000000000000001010000000000000000000000000003000100310000000000000000000001000100000000000000000000000001000101310000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000000000000000,6,17,10
+  //Board,tele,level,move
+
+  std::vector< std::string > tokens;
+  std::stringstream ss( line );
+  while( ss.good() ){
+    std::string substr;
+    std::getline( ss, substr, ',' );
+    tokens.push_back( substr );
+  }
+
+  if( tokens.size() != 4 ){
+    assert( false );
+  }
+
+  int const n_safe_tele = std::stoi( tokens[1] );
+  int const move = std::stoi( tokens[3] );
+
+  Board b;
+  b.load_from_stringified_representation( tokens[0] );
+  
+  return make_data( b, n_safe_tele, move, options );
 }
 
 

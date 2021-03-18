@@ -122,11 +122,13 @@ int main(){
       }
     }
 
+    constexpr int T_int = int( Key::T );
+
     //std::cout << n_options << std::endl;
-    int const option_cutoff = ( move == Key::T ? 1 : 2 );
+    int const option_cutoff = ( move == T_int ? 1 : 2 );
     if( n_options < option_cutoff or any_cascade_safe ) continue;
 
-    int const n_repeats = ( move == Key::T ? 10 : 1 );
+    int const n_repeats = ( move == T_int ? 10 : 1 );
     
     for( int i = 0; i < n_repeats; ++i ) {
       std::cout << line << '\n';

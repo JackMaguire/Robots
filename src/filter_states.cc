@@ -97,11 +97,11 @@ int main(){
     int const move = std::stoi( tokens[3] );
     switch( move ){
     case int( Key::NONE ):
-    case int( Key::T ):
     case int( Key::SPACE ):
     case int( Key::DELETE ):
     case int( Key::R ):
       continue;
+    case int( Key::T ):
     default:
       break;
     }
@@ -114,17 +114,24 @@ int main(){
       forcast_all_moves( b );
 
     int n_options = 0;
+    bool any_cascade_safe = false;
     for( auto const & i : forecasts ){
       for( auto const & j : i ){
 	if( j.legal ) ++n_options;
-	if( j.cascade_safe ) continue;
+	any_cascade_safe |= j.cascade_safe;
       }
     }
 
     //std::cout << n_options << std::endl;
-    if( n_options < 2 ) continue;
+    int const option_cutoff = ( move == Key::T ? 1 : 2 );
+    if( n_options < option_cutoff or any_cascade_safe ) continue;
 
-    std::cout << line << '\n';
+    int const n_repeats = ( move == Key::T ? 10 : 1 );
+    
+    for( int i = 0; i < n_repeats; ++i ) {
+      std::cout << line << '\n';
+    }
+
   }
 
   //std::cout << std::endl;

@@ -476,14 +476,17 @@ BoardWidget< GAME >::skip_to_risky(
 
     if( apr.apre == AutoPilotResultEnum::MOVE ){
       Board copy = game_.board();
+      int const n_robots_before = copy.n_robots();
       auto const result = copy.move_human( apr.dx, apr.dy );
       if( result == MoveResult::YOU_LOSE ) break;
       if( result == MoveResult::YOU_WIN_GAME ) break;
 
-      int const n_robots_desired = 2 * ( 10-game_.n_safe_teleports_remaining() );
+      int const n_robots_desired = ( 10-game_.n_safe_teleports_remaining() );
 
-      if( copy.n_robots() < n_robots_desired ){
-	break;
+      if( copy.n_robots() < n_robots_before ){
+	if( copy.n_robots() < n_robots_desired ){
+	  break;
+	}
       }
     }
 

@@ -19,9 +19,11 @@
 #include <chrono>         // std::chrono::seconds
 #include <math.h> //sqrt
 
+
 using GameOverBool = bool;
 
-using sm_int = char; //-127 to 127
+// signed char fails for some stupid reason
+using sm_int = signed short int; //char; //-127 to 127
 
 #define GO_HUMAN_SPEED true
 

@@ -120,9 +120,6 @@ struct OldSchoolGCN {
 
   void run_sanity_check(){
 
-    constexpr int ninputs = 3;
-    constexpr int noutputs = 1;
-
     std::unique_ptr<TF_Output[]> inputs(new TF_Output[ninputs]);
     std::unique_ptr<TF_Tensor *[]> input_values(new TF_Tensor *[ninputs]);
     std::unique_ptr<TF_Output[]> outputs(new TF_Output[noutputs]);

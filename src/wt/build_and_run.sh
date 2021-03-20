@@ -9,7 +9,7 @@ WARN="-Wall -Wshadow -Wunused -pedantic -Wextra -Werror"
 WARN="$WARN -Wno-subobject-linkage"
 
 #DEBUG="-D_GLIBCXX_DEBUG"
-#DEBUG="$DEBUG -g"
+DEBUG="$DEBUG -g"
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/tf/lib/
 

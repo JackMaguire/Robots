@@ -21,17 +21,19 @@
 
 using GameOverBool = bool;
 
+using sm_int = char; //-127 to 127
+
 #define GO_HUMAN_SPEED true
 
 //using uint = unsigned int;
 //using luint = long unsigned int;
 
-constexpr int WIDTH = 45;
-constexpr int HEIGHT = 30;
+constexpr sm_int WIDTH = 45;
+constexpr sm_int HEIGHT = 30;
 
 constexpr int MAX_N_ROUNDS = 66;
 
-enum class Occupant
+enum class Occupant : unsigned char
 {
  EMPTY = 0,
  ROBOT,
@@ -40,7 +42,7 @@ enum class Occupant
  OOB
 };
 
-enum class MoveResult
+enum class MoveResult : unsigned char
 {
  CONTINUE = 0,
  YOU_LOSE = 1,
@@ -59,8 +61,8 @@ struct Position {
     return ! ( *this == o );
   }
 
-  int x;
-  int y;
+  sm_int x;
+  sm_int y;
 
   Position operator+( Position const & o ) const {
     Position p;
@@ -85,18 +87,17 @@ struct Position {
 
 namespace {
 
-//constexpr Position STARTING_POSITION({ WIDTH / 2, HEIGHT / 2 });
 constexpr Position STARTING_POSITION({ 23, 15 });
 
 int nrobots_per_round( int round ){
   return round * 10;
 }
 
-int random_x(){
+sm_int random_x(){
   return rand() % WIDTH;
 }
 
-int random_y(){
+sm_int random_y(){
   return rand() % HEIGHT;
 }
 
@@ -137,16 +138,16 @@ public:
   }
 
   MoveResult
-  move_human( int const dx, int const dy );
+  move_human( sm_int const dx, sm_int const dy );
 
   bool
-  move_is_safe( int const dx, int const dy ) const;
+  move_is_safe( sm_int const dx, sm_int const dy ) const;
 
   bool
-  move_is_cascade_safe( int const dx, int const dy ) const;
+  move_is_cascade_safe( sm_int const dx, sm_int const dy ) const;
 
   bool
-  move_is_cascade_safe( int const dx, int const dy, int & n_robots_remaining ) const;
+  move_is_cascade_safe( sm_int const dx, sm_int const dy, int & n_robots_remaining ) const;
 
   __attribute__((unused))  
   std::string
@@ -173,9 +174,8 @@ public:
 private:
   std::array< std::array< Occupant, HEIGHT >, WIDTH > cells_;
 
-  Position human_position_;
   std::vector< Position > robot_positions_;
-
+  Position human_position_;
 };
 }
 
@@ -186,7 +186,7 @@ struct ForecastResults {
 };
 
 ForecastResults
-forcast_move( Board const & board, int const dx, int const dy ){
+forcast_move( Board const & board, sm_int const dx, sm_int const dy ){
   ForecastResults results;
   Board copy = board;
 
@@ -216,10 +216,10 @@ forcast_all_moves( Board const & board ) {
 
   Position const human_position = board.human_position();
 
-  for( int dx = -1; dx <= 1; ++dx ){
+  for( sm_int dx = -1; dx <= 1; ++dx ){
     if( human_position.x+dx < 0 || human_position.x+dx >= WIDTH ) continue;
 
-    for( int dy = -1; dy <= 1; ++dy ){
+    for( sm_int dy = -1; dy <= 1; ++dy ){
       if( human_position.y+dy < 0 || human_position.y+dy >= HEIGHT ) continue;
 
       forecasts[ dx+1 ][ dy+1 ] = forcast_move( board, dx, dy );
@@ -341,7 +341,7 @@ public:
 
   //true if game over
   GameOverBool
-  move_human( int const dx, int const dy ){
+  move_human( sm_int const dx, sm_int const dy ){
     int const n_robots_start = board_.n_robots();
 
     latest_result_ = board_.move_human( dx, dy );
@@ -480,8 +480,8 @@ Board::find_open_space( bool const allow_robot_movement ){
     //This can be very constexpr
     std::vector< Position > empty_positions;
     empty_positions.reserve( (HEIGHT*WIDTH) - 1 - robot_positions_.size() );
-    for( int w = 0; w < WIDTH; ++w ){
-      for( int h = 0; h < HEIGHT; ++h ){
+    for( sm_int w = 0; w < WIDTH; ++w ){
+      for( sm_int h = 0; h < HEIGHT; ++h ){
 	Position const p = { w, h };
 	if( allow_robot_movement ){
 	  if( cell_is_safe_for_teleport( p ) ){
@@ -519,9 +519,9 @@ Board::find_open_space( bool const allow_robot_movement ){
 
 bool
 Board::cell_is_safe_for_teleport( Position const p ) const {
-  for( int x = p.x - 1; x <= p.x + 1; ++x ){
+  for( sm_int x = p.x - 1; x <= p.x + 1; ++x ){
     if( x < 0 || x >= WIDTH) continue;
-    for( int y = p.y - 1; y <= p.y + 1; ++y ){
+    for( sm_int y = p.y - 1; y <= p.y + 1; ++y ){
       if( y < 0 || y >= HEIGHT) continue;
       if( cell( Position({ x, y }) ) != Occupant::EMPTY ) return false;
     }
@@ -570,8 +570,8 @@ Board::init( int const round ){
     //This can be very constexpr
     std::vector< Position > empty_positions;
     empty_positions.reserve( (HEIGHT*WIDTH) - 1 );
-    for( int w = 0; w < WIDTH; ++w ){
-      for( int h = 0; h < HEIGHT; ++h ){
+    for( sm_int w = 0; w < WIDTH; ++w ){
+      for( sm_int h = 0; h < HEIGHT; ++h ){
 	Position const p = { w, h };
 	if( p != STARTING_POSITION ){
 	  empty_positions.emplace_back( p );
@@ -595,8 +595,8 @@ Board::move_robots_1_step(
   bool const human_is_safe
 ){
   //Clear robots from map
-  for( int w = 0; w < WIDTH; ++w ){
-    for( int h = 0; h < HEIGHT; ++h ){
+  for( sm_int w = 0; w < WIDTH; ++w ){
+    for( sm_int h = 0; h < HEIGHT; ++h ){
       if( cells_[ w ][ h ] == Occupant::ROBOT ){
 	cells_[ w ][ h ] = Occupant::EMPTY;
       }
@@ -608,7 +608,7 @@ Board::move_robots_1_step(
  
   //keep temporary track of robots just in case they clash
   //elements are indices in robot_positions_
-  std::array< std::array< int, HEIGHT >, WIDTH > robot_indices;
+  std::array< std::array< sm_int, HEIGHT >, WIDTH > robot_indices;
 
   for( unsigned int r = 0; r < robot_positions_.size(); ++r ){
     Position & pos = robot_positions_[ r ];
@@ -662,7 +662,7 @@ Board::move_robots_1_step(
 } //move_robots_one_step
 
 MoveResult
-Board::move_human( int const dx, int const dy ) {
+Board::move_human( sm_int const dx, sm_int const dy ) {
   cell( human_position_ ) = Occupant::EMPTY;
 
   human_position_.x += dx;
@@ -682,14 +682,14 @@ Board::move_human( int const dx, int const dy ) {
 }
 
 bool
-Board::move_is_safe( int const dx, int const dy ) const {
+Board::move_is_safe( sm_int const dx, sm_int const dy ) const {
   Board copy = (*this);
   MoveResult const result = copy.move_human( dx, dy );
   return result != MoveResult::YOU_LOSE;
 }
 
 bool
-Board::move_is_cascade_safe( int const dx, int const dy ) const {
+Board::move_is_cascade_safe( sm_int const dx, sm_int const dy ) const {
   Board copy = (*this);
   MoveResult result = copy.move_human( dx, dy );
   while ( result == MoveResult::CONTINUE ){
@@ -700,8 +700,8 @@ Board::move_is_cascade_safe( int const dx, int const dy ) const {
 
 bool
 Board::move_is_cascade_safe(
-  int const dx,
-  int const dy,
+  sm_int const dx,
+  sm_int const dy,
   int & nremaining
 ) const {
   Board copy = (*this);
@@ -761,8 +761,8 @@ __attribute__((unused))
 std::string
 Board::get_safe_moves() const {
   std::stringstream ss;
-  for( int dx = -1; dx < 2; ++dx )
-    for( int dy = -1; dy < 2; ++dy )
+  for( sm_int dx = -1; dx < 2; ++dx )
+    for( sm_int dy = -1; dy < 2; ++dy )
       if( move_is_cascade_safe( dx, dy ) ){
 	ss << "1";
       } else {

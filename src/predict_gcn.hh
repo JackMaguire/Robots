@@ -4,6 +4,8 @@
 #include "robots.hh"
 #include "gcn.hh"
 
+#include <tensorflow/c/c_api.h>
+
 struct Prediction {
   int dx = -2;
   int dy = -2;

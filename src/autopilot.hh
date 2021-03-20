@@ -4,7 +4,7 @@
 #include "robots.hh"
 #include "gcn.hh"
 
-enum class AutoPilotResultEnum {
+enum class AutoPilotResultEnum : unsigned char {
   MOVE,
   CASCADE,
   TELEPORT

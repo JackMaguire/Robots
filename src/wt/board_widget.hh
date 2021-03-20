@@ -237,10 +237,13 @@ protected:
   void
   loop_autopilot( int tele_limit, int ms = 250 );
 
+  void
+  skip_to_risky( int ms = 250 );
+
   bool
   handle_move(
-    int const dx,
-    int const dy,
+    sm_int const dx,
+    sm_int const dy,
     bool const teleport = false,
     bool const wait = false
   ){
@@ -311,8 +314,8 @@ BoardWidget< GAME >::draw_background( Wt::WPainter & painter, int const grid_siz
 
   bool use_c1 = false;
 
-  for( int i = 0; i < WIDTH; ++i ){
-    for( int j = 0; j < HEIGHT; ++j ){
+  for( sm_int i = 0; i < WIDTH; ++i ){
+    for( sm_int j = 0; j < HEIGHT; ++j ){
       use_c1 = !use_c1;
       if( use_c1 ) painter.setBrush(Wt::WBrush(c1));
       else         painter.setBrush(Wt::WBrush(c2));
@@ -339,9 +342,9 @@ BoardWidget< GAME >::draw_foreground(
   }
 
   auto const human_p = board.human_position();
-  for( int dx = -1; dx <= 1; ++dx ){
+  for( sm_int dx = -1; dx <= 1; ++dx ){
     if( human_p.x + dx >= WIDTH ) continue;
-    for( int dy = -1; dy <= 1; ++dy ){
+    for( sm_int dy = -1; dy <= 1; ++dy ){
       if( human_p.y + dy >= HEIGHT ) continue;
       if( board.move_is_cascade_safe( dx, dy ) ){
 	if( show_safe_moves_ ){
@@ -397,9 +400,9 @@ BoardWidget< GAME >::draw_foreground(
     painter.setPen( palette_.thin_pen );
 
     Position p;
-    for( int i = 0; i < WIDTH; ++i ){
+    for( sm_int i = 0; i < WIDTH; ++i ){
       p.x = i;
-      for( int j = 0; j < HEIGHT; ++j ){
+      for( sm_int j = 0; j < HEIGHT; ++j ){
 	p.y = (HEIGHT-1) - j;
 	switch( board.cell( p ) ){
 	case( Occupant::EMPTY ):
@@ -460,6 +463,47 @@ BoardWidget< GAME >::loop_autopilot(
     std::this_thread::sleep_for (std::chrono::milliseconds( ms ));
   }
 }
+
+template< typename GAME >
+void
+BoardWidget< GAME >::skip_to_risky(
+  int const ms
+){
+  for( unsigned int i = 0; i < 1000; ++i ) {
+
+    AutoPilotResult const apr =
+      run_autopilot( game_, current_prediction_ );
+
+    if( apr.apre == AutoPilotResultEnum::MOVE ){
+      Board copy = game_.board();
+      auto const result = copy.move_human( apr.dx, apr.dy );
+      if( result == MoveResult::YOU_LOSE ) break;
+      if( result == MoveResult::YOU_WIN_GAME ) break;
+
+      int const n_robots_desired = 2 * ( 10-game_.n_safe_teleports_remaining() );
+
+      if( copy.n_robots() < n_robots_desired ){
+	break;
+      }
+    }
+
+    bool const game_over =
+      handle_move(
+	apr.dx,
+	apr.dy,
+	apr.apre == AutoPilotResultEnum::TELEPORT,
+	apr.apre == AutoPilotResultEnum::CASCADE
+      );
+
+    this->update();
+    app_->processEvents();
+
+    if( game_over ) break;
+
+    std::this_thread::sleep_for (std::chrono::milliseconds( ms ));
+  }
+}
+
 
 
 template< typename GAME >
@@ -539,6 +583,10 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
 	apr.apre == AutoPilotResultEnum::TELEPORT,
 	apr.apre == AutoPilotResultEnum::CASCADE );
     }
+  break;
+
+  case( '7' ):
+    if( show_ml_ ) skip_to_risky( 0 );
   break;
 
   case( '8' ):

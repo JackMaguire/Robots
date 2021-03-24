@@ -16,8 +16,8 @@ int main(){
 
   bool any_cascade = false;
 
-  for( int i = 0; i < 1; ++i ){
-    RobotsGame< NullVisualizer, false, 0 > game( 3, 0 );
+  for( int i = 0; i < 5; ++i ){
+    RobotsGame< NullVisualizer, false, 0 > game( 1, 0 );
     auto result = recursive_search_for_cascade< 10 >( game.board() );
     any_cascade |= result.cascade;
   }

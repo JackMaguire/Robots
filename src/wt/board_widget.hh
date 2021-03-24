@@ -517,11 +517,18 @@ BoardWidget< GAME >::run_recursive_search(
   int const ms
 ){
   constexpr int Depth = 4;
+
+  int const min_n_robots = 8 - game_.n_safe_teleports_remaining();
+
   SearchResult< Depth > const search_result =
     recursive_search_for_cascade< Depth >( game_.board() );
 
   if( not search_result.cascade ){
     std::cout << "No cascade" << std::endl;
+    return;
+  }
+
+  if( search_result.nrobots_killed_cascading < min_n_robots ){
     return;
   }
 

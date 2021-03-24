@@ -43,6 +43,7 @@ template< int TOTAL_DEPTH >
 SearchResult< TOTAL_DEPTH >
 _recursive_search(
   Board const & board,
+  int const min_sufficient_robots_killed,
   std::array< Move, TOTAL_DEPTH > const & moves,
   int const min_n_robots,
   int const recursion_round //first call is 0
@@ -76,6 +77,8 @@ _recursive_search(
   // Propogate
   ResultType best_result;
   Position hpos = board.human_position();
+
+  bool min_sufficient_robots_killed_met = false;
 
   for( int dx = -1; dx <= 1; ++dx ){
     for( int dy = -1; dy <= 1; ++dy ){
@@ -111,8 +114,17 @@ _recursive_search(
 	result.moves[ recursion_round ].dx = dx;
 	result.moves[ recursion_round ].dy = dy;
 	result.moves[ recursion_round ].nullop = false;	
+
+	int const inner_suff_cutoff = std::min( min_sufficient_robots_killed, copy.n_robots() );
+
 	ResultType const best_subresult =
-	  _recursive_search< TOTAL_DEPTH >( copy, result.moves, min_n_robots, recursion_round + 1 );
+	  _recursive_search< TOTAL_DEPTH >(
+	    copy,
+	    inner_suff_cutoff, //min_sufficient_robots_killed,
+	    result.moves,
+	    min_n_robots,
+	    recursion_round + 1
+	  );
 
 	result = best_subresult;
 	break;
@@ -122,7 +134,11 @@ _recursive_search(
 	best_result = result;
       }
 
+      min_sufficient_robots_killed_met = best_result.nrobots_killed_cascading >= min_sufficient_robots_killed;
+
+      if( min_sufficient_robots_killed_met ) break;
     }
+    if( min_sufficient_robots_killed_met ) break;
   }
 
   return best_result;
@@ -132,8 +148,15 @@ template< int MAX_DEPTH >
 SearchResult< MAX_DEPTH >
 recursive_search_for_cascade(
   Board const & board,
+  int const min_sufficient_robots_killed = 10,
   int const min_n_robots = 0
 ){
   std::array< Move, MAX_DEPTH > moves;
-  return _recursive_search< MAX_DEPTH >( board, moves, min_n_robots, 0 );
+  return _recursive_search< MAX_DEPTH >(
+    board,
+    min_sufficient_robots_killed,
+    moves,
+    min_n_robots,
+    0
+  );
 }

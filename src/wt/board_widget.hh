@@ -242,6 +242,9 @@ protected:
   skip_to_risky( int ms = 250 );
 
   void
+  stall_for_time( int ms = 250 );
+
+  void
   run_recursive_search( int ms = 250, int ntele_desired = 8 );
 
   bool
@@ -485,12 +488,16 @@ BoardWidget< GAME >::skip_to_risky(
       if( result == MoveResult::YOU_LOSE ) break;
       if( result == MoveResult::YOU_WIN_GAME ) break;
 
-      int const n_robots_desired = ( 10-game_.n_safe_teleports_remaining() );
+      int const n_robots_desired = ( 15-game_.n_safe_teleports_remaining() );
 
       if( copy.n_robots() < n_robots_before ){
 	if( copy.n_robots() < n_robots_desired ){
 	  break;
 	}
+      }
+
+      if( game_.n_safe_teleports_remaining() < 2 ){
+	break;
       }
     }
 
@@ -519,7 +526,10 @@ BoardWidget< GAME >::run_recursive_search(
 ){
   constexpr int Depth = 6;
 
-  int const min_n_robots = ntele_desired - game_.n_safe_teleports_remaining();
+  int min_n_robots = ntele_desired - game_.n_safe_teleports_remaining();
+  if( min_n_robots > game_.board().n_robots() ){
+    min_n_robots = game_.board().n_robots();
+  }
 
   SearchResult< Depth > const search_result =
     recursive_search_for_cascade< Depth >( game_.board() );
@@ -549,6 +559,42 @@ BoardWidget< GAME >::run_recursive_search(
     std::this_thread::sleep_for (std::chrono::milliseconds( ms ));
   }
 }
+
+template< typename GAME >
+void
+BoardWidget< GAME >::stall_for_time(
+  int const ms
+){
+
+  bool solution_found = true;
+
+  while( solution_found ){
+    solution_found = false;
+    for( int dx = -1; dx <= 1; ++dx ){
+      for( int dy = -1; dy <= 1; ++dy ){
+	Board copy( game_.board() );
+	MoveResult const move_result = copy.move_human( dx, dy );
+
+	if( move_result != MoveResult::CONTINUE ) break;
+
+	solution_found = copy.n_robots() == game_.board().n_robots();
+
+	if( solution_found ) {
+	  handle_move( dx, dy, false, false );
+	  break;
+	}
+      }
+      if( solution_found ) break;
+    }
+
+    this->update();
+    app_->processEvents();
+
+    std::this_thread::sleep_for( std::chrono::milliseconds( ms ) );
+
+  }
+}
+
 
 
 
@@ -640,15 +686,15 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
   break;
 
   case( '7' ):
-    if( show_ml_ ) skip_to_risky( 0 );
+    stall_for_time( 0 );
   break;
 
   case( '8' ):
-    if( show_ml_ ) loop_autopilot( 4, 0 );
+    if( show_ml_ ) skip_to_risky( 0 );
   break;
 
   case( '9' ):
-    if( show_ml_ ) loop_autopilot( 2, 0 );
+    if( show_ml_ ) loop_autopilot( 4, 0 );
   break;
 
   case( '0' ):

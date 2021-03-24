@@ -27,7 +27,7 @@ struct SearchResult {
     
     if( cascade ){
 
-      if( other.cascade ) return nrobots_killed_cascading < other.nrobots_killed_cascading;
+      if( other.cascade ) return nrobots_killed_cascading > other.nrobots_killed_cascading;
       else                return true;
 
     } else {

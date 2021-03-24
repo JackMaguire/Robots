@@ -242,7 +242,7 @@ protected:
   skip_to_risky( int ms = 250 );
 
   void
-  run_recursive_search( int ms = 250 );
+  run_recursive_search( int ms = 250, int ntele_desired = 8 );
 
   bool
   handle_move(
@@ -514,11 +514,12 @@ BoardWidget< GAME >::skip_to_risky(
 template< typename GAME >
 void
 BoardWidget< GAME >::run_recursive_search(
-  int const ms
+  int const ms,
+  int const ntele_desired
 ){
-  constexpr int Depth = 4;
+  constexpr int Depth = 6;
 
-  int const min_n_robots = 8 - game_.n_safe_teleports_remaining();
+  int const min_n_robots = ntele_desired - game_.n_safe_teleports_remaining();
 
   SearchResult< Depth > const search_result =
     recursive_search_for_cascade< Depth >( game_.board() );
@@ -631,7 +632,11 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
   break;
 
   case( '6' ):
-    run_recursive_search( 0 );
+    run_recursive_search( 0, 8 );
+  break;
+
+  case( 'Y' ):
+    run_recursive_search( 0, 0 );
   break;
 
   case( '7' ):

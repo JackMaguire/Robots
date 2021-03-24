@@ -13,6 +13,7 @@
 #include "sidebar.hh"
 #include "predict_gcn.hh"
 #include "autopilot.hh"
+#include "recursion.hh"
 
 #include <iostream>
 #include <mutex>
@@ -239,6 +240,9 @@ protected:
 
   void
   skip_to_risky( int ms = 250 );
+
+  void
+  run_recursive_search( int ms = 250 );
 
   bool
   handle_move(
@@ -507,6 +511,37 @@ BoardWidget< GAME >::skip_to_risky(
   }
 }
 
+template< typename GAME >
+void
+BoardWidget< GAME >::run_recursive_search(
+  int const ms
+){
+  constexpr int Depth = 4;
+  SearchResult< Depth > const search_result =
+    recursive_search_for_cascade< Depth >( game_.board() );
+
+  if( not search_result.cascade ){
+    std::cout << "No cascade" << std::endl;
+    return;
+  }
+
+  for( Move const m : search_result.moves ){
+
+    if( m.nullop ) break;
+
+    bool const game_over = handle_move( m.dx, m.dy, false, false );
+
+    assert( not game_over );
+
+    this->update();
+    app_->processEvents();
+
+    if( game_over ) break;
+
+    std::this_thread::sleep_for (std::chrono::milliseconds( ms ));
+  }
+}
+
 
 
 template< typename GAME >
@@ -586,6 +621,10 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
 	apr.apre == AutoPilotResultEnum::TELEPORT,
 	apr.apre == AutoPilotResultEnum::CASCADE );
     }
+  break;
+
+  case( '6' ):
+    run_recursive_search( 0 );
   break;
 
   case( '7' ):

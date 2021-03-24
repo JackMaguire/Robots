@@ -540,6 +540,7 @@ BoardWidget< GAME >::run_recursive_search(
   }
 
   if( search_result.nrobots_killed_cascading < min_n_robots ){
+    std::cout << "No good cascade" << std::endl;
     return;
   }
 

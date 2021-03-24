@@ -132,6 +132,14 @@ public:
     return cells_[ p.x ][ p.y ];
   }
 
+  Occupant & cell( int const x, int const y ) {
+    return cells_[ x ][ y ];
+  }
+
+  Occupant const & cell( int const x, int const y ) const {
+    return cells_[ x ][ y ];
+  }
+
   MoveResult
   move_robots_1_step( bool const human_is_safe = false );
 

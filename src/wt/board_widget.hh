@@ -235,16 +235,20 @@ protected:
     return game_over;
   }
 
-  void
+  GameOverBool
   loop_autopilot( int tele_limit, int ms = 250 );
 
   void
+  loop_smart_autopilot( int ms = 250 );
+
+  bool
   skip_to_risky( int ms = 250 );
 
-  void
+  bool
   stall_for_time( int ms = 250 );
 
-  void
+  template< int Depth = 6 >
+  bool
   run_recursive_search( int ms = 250, int ntele_desired = 8 );
 
   bool
@@ -445,12 +449,13 @@ BoardWidget< GAME >::draw_foreground(
 }
 
 template< typename GAME >
-void
+GameOverBool
 BoardWidget< GAME >::loop_autopilot(
   int const teleport_limit,
-  int const ms
+  int const ms,
+  int const nloop
 ){
-  for( unsigned int i = 0; i < 300; ++i ) {
+  for( unsigned int i = 0; i < nloop; ++i ) {
     AutoPilotResult const apr = run_autopilot( game_, current_prediction_ );
 
     bool const game_over = handle_move(
@@ -463,16 +468,41 @@ BoardWidget< GAME >::loop_autopilot(
     this->update();
     app_->processEvents();
 
-    if( game_over ) break;
+    if( game_over ) return true;
 
     if( game_.n_safe_teleports_remaining() <= teleport_limit ) break;
 
     std::this_thread::sleep_for (std::chrono::milliseconds( ms ));
   }
+
+  return false;
 }
 
 template< typename GAME >
 void
+BoardWidget< GAME >::loop_smart_autopilot(
+  int const ms
+){
+  while( true ){
+    skip_to_risky( ms );
+
+    bool const recursive_success = run_recursive_search< 6 >( ms, 7 );
+    if( recursive_success ) continue;
+
+    bool const stall_success = stall_for_time( ms );
+    if( stall_success ) {
+      bool const recursive_success = run_recursive_search< 6 >( ms, 7 );
+      if( recursive_success ) continue;
+    }
+
+    bool const game_over = loop_autopilot( -1, ms, 1 );
+    if( game_over ) break;
+  }
+}
+
+
+template< typename GAME >
+bool
 BoardWidget< GAME >::skip_to_risky(
   int const ms
 ){
@@ -512,19 +542,22 @@ BoardWidget< GAME >::skip_to_risky(
     this->update();
     app_->processEvents();
 
-    if( game_over ) break;
+    if( game_over ) return true;
 
     std::this_thread::sleep_for (std::chrono::milliseconds( ms ));
   }
+
+  return false;
 }
 
-template< typename GAME >
-void
+template<class GAME>
+template<int Depth>
+bool
 BoardWidget< GAME >::run_recursive_search(
   int const ms,
   int const ntele_desired
 ){
-  constexpr int Depth = 6;
+  //constexpr int Depth = 6;
 
   int min_n_robots = ntele_desired - game_.n_safe_teleports_remaining();
   if( min_n_robots > game_.board().n_robots() ){
@@ -536,12 +569,12 @@ BoardWidget< GAME >::run_recursive_search(
 
   if( not search_result.cascade ){
     std::cout << "No cascade" << std::endl;
-    return;
+    return false;
   }
 
   if( search_result.nrobots_killed_cascading < min_n_robots ){
     std::cout << "No good cascade" << std::endl;
-    return;
+    return false;
   }
 
   for( Move const m : search_result.moves ){
@@ -559,14 +592,17 @@ BoardWidget< GAME >::run_recursive_search(
 
     std::this_thread::sleep_for (std::chrono::milliseconds( ms ));
   }
+
+  return true;
 }
 
 template< typename GAME >
-void
+bool
 BoardWidget< GAME >::stall_for_time(
   int const ms
 ){
 
+  bool any_solution_found = false;
   bool solution_found = true;
 
   while( solution_found ){
@@ -581,6 +617,7 @@ BoardWidget< GAME >::stall_for_time(
 	solution_found = copy.n_robots() == game_.board().n_robots();
 
 	if( solution_found ) {
+	  any_solution_found = true;
 	  handle_move( dx, dy, false, false );
 	  break;
 	}
@@ -594,6 +631,8 @@ BoardWidget< GAME >::stall_for_time(
     std::this_thread::sleep_for( std::chrono::milliseconds( ms ) );
 
   }
+
+  return any_solution_found;
 }
 
 
@@ -695,7 +734,7 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
   break;
 
   case( '9' ):
-    if( show_ml_ ) loop_autopilot( 4, 0 );
+    if( show_ml_ ) loop_smart_autopilot( 0 );
   break;
 
   case( '0' ):

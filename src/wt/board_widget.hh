@@ -236,12 +236,13 @@ protected:
   }
 
   GameOverBool
-  loop_autopilot( int tele_limit, int ms = 250 );
+  loop_autopilot( int tele_limit, int ms = 250,
+    unsigned int nloop = 300 );
 
   void
   loop_smart_autopilot( int ms = 250 );
 
-  bool
+  GameOverBool
   skip_to_risky( int ms = 250 );
 
   bool
@@ -251,7 +252,7 @@ protected:
   bool
   run_recursive_search( int ms = 250, int ntele_desired = 8 );
 
-  bool
+  GameOverBool
   handle_move(
     sm_int const dx,
     sm_int const dy,
@@ -453,7 +454,7 @@ GameOverBool
 BoardWidget< GAME >::loop_autopilot(
   int const teleport_limit,
   int const ms,
-  int const nloop
+  unsigned int const nloop
 ){
   for( unsigned int i = 0; i < nloop; ++i ) {
     AutoPilotResult const apr = run_autopilot( game_, current_prediction_ );
@@ -484,25 +485,28 @@ BoardWidget< GAME >::loop_smart_autopilot(
   int const ms
 ){
   while( true ){
-    skip_to_risky( ms );
+    if( skip_to_risky( ms ) ) break;
 
-    bool const recursive_success = run_recursive_search< 6 >( ms, 7 );
-    if( recursive_success ) continue;
+    if( run_recursive_search< 6 >( ms, 7 ) ) continue;
 
-    bool const stall_success = stall_for_time( ms );
-    if( stall_success ) {
-      bool const recursive_success = run_recursive_search< 6 >( ms, 7 );
-      if( recursive_success ) continue;
+    if( stall_for_time( ms ) ) {
+      if( run_recursive_search< 6 >( ms, 7 ) ) continue;
     }
 
-    bool const game_over = loop_autopilot( -1, ms, 1 );
-    if( game_over ) break;
+    if( game_.n_safe_teleports_remaining() > 0 ) {
+      bool const game_over = handle_move( 0, 0, true );
+      if( game_over ) break;      
+    } else {
+      bool const game_over = loop_autopilot( -1, ms, 1 );
+      if( game_over ) break;
+    }
+
   }
 }
 
 
 template< typename GAME >
-bool
+GameOverBool
 BoardWidget< GAME >::skip_to_risky(
   int const ms
 ){

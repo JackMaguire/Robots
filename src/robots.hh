@@ -19,7 +19,7 @@
 #include <chrono>         // std::chrono::seconds
 #include <math.h> //sqrt
 
-#define USE_BOOST_SMALL_VEC //still unbenchmarked!
+#define USE_BOOST_SMALL_VEC //benchmarked - slightly faster with N = MAX_ROBOT / 10
 
 #ifdef USE_BOOST_SMALL_VEC
 #include <boost/container/small_vector.hpp>
@@ -114,7 +114,7 @@ class Board {
 public:
 
 #ifdef USE_BOOST_SMALL_VEC
-  using PositionVec = boost::container::small_vector< Position, MAX_N_ROBOTS / 10 >;
+  using PositionVec = boost::container::small_vector< Position, MAX_N_ROBOTS >;
 #else
   using PositionVec = std::vector< Position >;
 #endif
@@ -122,6 +122,10 @@ public:
   Board(){
     srand(time(NULL));
     init( 1 );
+  }
+
+  Board( std::string const & stringified_rep ){
+    load_from_stringified_representation( stringified_rep );
   }
 
   void clear_board();

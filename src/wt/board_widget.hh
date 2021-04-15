@@ -245,6 +245,9 @@ protected:
   GameOverBool
   skip_to_risky( int ms = 250 );
 
+  GameOverBool
+  skip_to_risky_w_recursion( int ms = 250 );
+
   bool
   stall_for_time( int ms = 250 );
 
@@ -485,7 +488,8 @@ BoardWidget< GAME >::loop_smart_autopilot(
   int const ms
 ){
   while( true ){
-    if( skip_to_risky( ms ) ) break;
+    //if( skip_to_risky( ms ) ) break;
+    if( skip_to_risky_w_recursion( ms ) ) break;
 
     if( run_recursive_search< 6 >( ms, 7 ) ) continue;
 
@@ -554,6 +558,67 @@ BoardWidget< GAME >::skip_to_risky(
   return false;
 }
 
+template< typename GAME >
+GameOverBool
+BoardWidget< GAME >::skip_to_risky_w_recursion(
+  int const ms
+){
+  for( unsigned int i = 0; i < 1000; ++i ) {
+
+    bool const recursion_success = run_recursive_search< 4 >( ms, 7 );
+    if( recursion_success ){
+      bool const game_over_rec = handle_move( 0, 0, false, true );
+
+      //TODO RAII?
+      this->update();
+      app_->processEvents();
+
+      if( game_over_rec ) return true;
+      continue;
+    }
+
+    AutoPilotResult const apr =
+      run_autopilot( game_, current_prediction_ );
+
+    if( apr.apre == AutoPilotResultEnum::MOVE ){
+      Board copy = game_.board();
+      int const n_robots_before = copy.n_robots();
+      auto const result = copy.move_human( apr.dx, apr.dy );
+      if( result == MoveResult::YOU_LOSE ) break;
+      if( result == MoveResult::YOU_WIN_GAME ) break;
+
+      int const n_robots_desired = ( 15-game_.n_safe_teleports_remaining() );
+
+      if( copy.n_robots() < n_robots_before ){
+	if( copy.n_robots() < n_robots_desired ){
+	  break;
+	}
+      }
+
+      if( game_.n_safe_teleports_remaining() < 2 ){
+	break;
+      }
+    }
+
+    bool const game_over =
+      handle_move(
+	apr.dx,
+	apr.dy,
+	apr.apre == AutoPilotResultEnum::TELEPORT,
+	apr.apre == AutoPilotResultEnum::CASCADE
+      );
+
+    this->update();
+    app_->processEvents();
+
+    if( game_over ) return true;
+
+    std::this_thread::sleep_for (std::chrono::milliseconds( ms ));
+  }
+
+  return false;
+}
+
 template<class GAME>
 template<int Depth>
 bool
@@ -572,12 +637,12 @@ BoardWidget< GAME >::run_recursive_search(
     recursive_search_for_cascade< Depth >( game_.board() );
 
   if( not search_result.cascade ){
-    std::cout << "No cascade" << std::endl;
+    //std::cout << "No cascade" << std::endl;
     return false;
   }
 
   if( search_result.nrobots_killed_cascading < min_n_robots ){
-    std::cout << "No good cascade" << std::endl;
+    //std::cout << "No good cascade" << std::endl;
     return false;
   }
 

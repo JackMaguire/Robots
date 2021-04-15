@@ -19,6 +19,12 @@
 #include <chrono>         // std::chrono::seconds
 #include <math.h> //sqrt
 
+#define USE_BOOST_SMALL_VEC //still unbenchmarked!
+
+#ifdef USE_BOOST_SMALL_VEC
+#include <boost/container/small_vector.hpp>
+#endif
+
 
 using GameOverBool = bool;
 
@@ -34,6 +40,7 @@ constexpr sm_int WIDTH = 45;
 constexpr sm_int HEIGHT = 30;
 
 constexpr int MAX_N_ROUNDS = 66;
+constexpr int MAX_N_ROBOTS = MAX_N_ROUNDS * 10;
 
 enum class Occupant : unsigned char
 {
@@ -105,6 +112,13 @@ sm_int random_y(){
 
 class Board {
 public:
+
+#ifdef USE_BOOST_SMALL_VEC
+  using PositionVec = boost::container::small_vector< Position, MAX_N_ROBOTS / 10 >;
+#else
+  using PositionVec = std::vector< Position >;
+#endif
+
   Board(){
     srand(time(NULL));
     init( 1 );
@@ -177,14 +191,14 @@ public:
     return p.x >= 0 && p.x < WIDTH && p.y >= 0 && p.y < HEIGHT;
   }
 
-  std::vector< Position > const & robots() const {
+  PositionVec const & robots() const {
     return robot_positions_;
   }
 
 private:
   std::array< std::array< Occupant, HEIGHT >, WIDTH > cells_;
 
-  std::vector< Position > robot_positions_;
+  PositionVec robot_positions_;
   Position human_position_;
 };
 }

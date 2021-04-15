@@ -96,6 +96,9 @@ recursive_search_for_cascade(
 	outcome.can_cascade = true;
       outcome.nrobots_killed_in_cascade = 0;
       break;
+
+      case( MoveResult::CONTINUE ):
+	//TODO check for cascade?
       }
     }
   };

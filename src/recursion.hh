@@ -46,7 +46,8 @@ _recursive_search(
   int const min_sufficient_robots_killed,
   std::array< Move, TOTAL_DEPTH > const & moves,
   int const min_n_robots,
-  int const recursion_round //first call is 0
+  int const recursion_round, //first call is 0
+  bool const check_for_cascade
 ){
 
   using ResultType = SearchResult< TOTAL_DEPTH >;
@@ -54,13 +55,16 @@ _recursive_search(
   // Check for termination
 
   // Case 1: Valid Solution
-  if( board.move_is_cascade_safe( 0, 0 ) ){
-    ResultType result;
-    result.moves = moves;
-    result.cascade = true;
-    result.nrobots_killed_cascading = board.n_robots();
-    return result;
+  if( check_for_cascade ){
+    if( board.move_is_cascade_safe( 0, 0 ) ){
+      ResultType result;
+      result.moves = moves;
+      result.cascade = true;
+      result.nrobots_killed_cascading = board.n_robots();
+      return result;
+    }
   }
+
 
   if(
     (recursion_round == TOTAL_DEPTH) // Case 2: Max Depth
@@ -123,7 +127,8 @@ _recursive_search(
 	    inner_suff_cutoff, //min_sufficient_robots_killed,
 	    result.moves,
 	    min_n_robots,
-	    recursion_round + 1
+	    recursion_round + 1,
+	    not( dx == 0 and dy == 0 )
 	  );
 
 	result = best_subresult;
@@ -157,6 +162,7 @@ recursive_search_for_cascade(
     min_sufficient_robots_killed,
     moves,
     min_n_robots,
-    0
+    0,
+    true
   );
 }

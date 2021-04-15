@@ -41,111 +41,6 @@ struct SearchResult {
   }
 };
 
-template< int TOTAL_DEPTH >
-SearchResult< TOTAL_DEPTH >
-_recursive_search(
-  Board const & board,
-  int const min_sufficient_robots_killed,
-  std::array< Move, TOTAL_DEPTH > const & moves,
-  int const min_n_robots,
-  int const recursion_round //first call is 0
-){
-
-  using ResultType = SearchResult< TOTAL_DEPTH >;
-
-  // Check for termination
-
-  // Case 1: Valid Solution
-  if( board.move_is_cascade_safe( 0, 0 ) ){
-    ResultType result;
-    result.moves = moves;
-    result.cascade = true;
-    result.nrobots_killed_cascading = board.n_robots();
-    return result;
-  }
-
-  if(
-    (recursion_round == TOTAL_DEPTH) // Case 2: Max Depth
-    or
-    (board.n_robots() < min_n_robots) // Case 3: Not Enough Robots
-  ){
-    ResultType result;
-    result.moves = moves;
-    result.cascade = false;
-    result.nrobots_killed_cascading = -1;
-    return result;
-  }
-
-  // Propogate
-  ResultType best_result;
-  Position hpos = board.human_position();
-
-  bool min_sufficient_robots_killed_met = false;
-
-  for( int dx = -1; dx <= 1; ++dx ){
-    for( int dy = -1; dy <= 1; ++dy ){
-      switch( board.cell( hpos.x + dx, hpos.y + dy ) ){
-      case( Occupant::ROBOT ):
-      case( Occupant::FIRE ):
-      case( Occupant::OOB ):
-	continue;
-      case( Occupant::EMPTY ):
-      case( Occupant::HUMAN ):
-	break;
-      }
-
-      Board copy( board );
-      MoveResult const move_result = copy.move_human( dx, dy );
-      ResultType result;
-      result.moves = moves;
-
-      switch( move_result ){
-      case( MoveResult::YOU_LOSE ):
-	continue;
-
-      case( MoveResult::YOU_WIN_ROUND ):
-      case( MoveResult::YOU_WIN_GAME ):
-	result.moves[ recursion_round ].dx = dx;
-	result.moves[ recursion_round ].dy = dy;
-	result.moves[ recursion_round ].nullop = false;
-	result.cascade = true; //technically...
-	result.nrobots_killed_cascading = 0;
-	break;
-
-      case( MoveResult::CONTINUE ):
-	result.moves[ recursion_round ].dx = dx;
-	result.moves[ recursion_round ].dy = dy;
-	result.moves[ recursion_round ].nullop = false;	
-
-	int const inner_suff_cutoff = std::min( min_sufficient_robots_killed, copy.n_robots() );
-
-	ResultType const best_subresult =
-	  _recursive_search< TOTAL_DEPTH >(
-	    copy,
-	    inner_suff_cutoff, //min_sufficient_robots_killed,
-	    result.moves,
-	    min_n_robots,
-	    recursion_round + 1
-	  );
-
-	result = best_subresult;
-	break;
-      }
-
-      if( result.is_better_than( best_result ) ){
-	best_result = result;
-      }
-
-      min_sufficient_robots_killed_met = best_result.nrobots_killed_cascading >= min_sufficient_robots_killed;
-
-      if( min_sufficient_robots_killed_met ) break;
-    }
-    if( min_sufficient_robots_killed_met ) break;
-  }
-
-  return best_result;
-}
-
 template< int MAX_DEPTH >
 SearchResult< MAX_DEPTH >
 recursive_search_for_cascade(
@@ -155,13 +50,54 @@ recursive_search_for_cascade(
 ){
 
   using StateType = Board;
-  using OutcomeType = SearchResult< MAX_DEPTH >;
+  //using OutcomeType = SearchResult< MAX_DEPTH >;
+
+  struct OutcomeType {
+    MoveResult move_result;
+    bool can_cascade = false;
+    int nrobots_killed_in_cascade = -1;
+  };
+
   using DDFR = joost::DDFRCache< StateType, OutcomeType, 9 >;
 
   DDFR ddfr( board );
 
   struct Forecaster {
-    //TODO
+    static
+    void
+    forecast(
+      StateType const & incoming_board,
+      unsigned int const move,
+      StateType & outgoing_board,
+      OutcomeType & outcome
+    ){
+      OutcomeType outcome;
+
+      int dx, dy;
+      switch( move ){
+      case 0: case 1: case 2: dx = -1; break;
+      case 3: case 4: case 5: dx = 0;  break;
+      case 6: case 7: case 8: dx = 1;  break;
+      }
+      switch( move ){
+      case 0: case 3: case 6: dy = -1; break;
+      case 1: case 4: case 7: dy = 0;  break;
+      case 2: case 5: case 8: dy = 1;  break;
+      }
+
+      outgoing_board = incoming_board;
+      outcome.move_result = outgoing_board.move_human( dx, dy );
+
+      switch( outcome.move_result ){
+      case( MoveResult::YOU_LOSE ): return;
+
+      case( MoveResult::YOU_WIN_ROUND ):
+      case( MoveResult::YOU_WIN_GAME ):
+	outcome.can_cascade = true;
+      outcome.nrobots_killed_in_cascade = 0;
+      break;
+      }
+    }
   };
 
   struct OutcomeRanker {

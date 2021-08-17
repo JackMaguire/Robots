@@ -8,6 +8,9 @@
 #include <Wt/WMessageBox.h>
 #include <Wt/WApplication.h>
 #include <Wt/WIntValidator.h>
+#include <Wt/WSlider.h>
+#include <Wt/WGroupBox.h>
+#include <Wt/WCheckBox.h>
 
 #include "robots.hh"
 #include "gcn.hh"
@@ -151,10 +154,49 @@ public:
   }
 
   void set_up_buttons(){
-
     int row = 2;
 
-    Wt::WLineEdit * n_ml = sidebar_->elementAt(++row, 0)->addNew< Wt::WLineEdit >( "1" );
+    Wt::WGroupBox * settings_box = sidebar_->elementAt(++row, 0)->addNew<Wt::WGroupBox>( "Settings" );
+
+    Wt::WCheckBox * show_lines = settings_box->addNew< Wt::WCheckBox >( "Show Graph" );
+    show_lines->checked().connect(
+      [=](){
+	show_lines_ = true;
+	update();
+      }
+    );
+    show_lines->unChecked().connect(
+      [=](){
+	show_lines_ = false;
+	update();
+      }
+    );
+
+    settings_box->addNew< Wt::WBreak >();
+    settings_box->addNew<Wt::WText>( "Game Speed:" );
+
+    Wt::WSlider *slider = settings_box->addNew<Wt::WSlider>();
+    slider->setTickInterval(50);
+    slider->setMinimum(0);
+    slider->setMaximum(1000);
+    slider->setValue(0);
+    
+
+    make_ml_box( row, slider );
+    make_recursion_box( row, slider );
+    make_hybrid_box( row, slider );
+  }
+
+  void
+  make_ml_box( int & row, Wt::WSlider * gs_slider ){
+    Wt::WGroupBox * box = sidebar_->elementAt(++row, 0)->addNew<Wt::WGroupBox>( "XENet" );
+
+    box->addNew<Wt::WText>( "Number of moves to perform:" );
+
+    box->addNew< Wt::WBreak >();
+
+
+    Wt::WLineEdit * n_ml = box->addNew< Wt::WLineEdit >( "1" );
     auto validator = std::make_shared< Wt::WIntValidator >( 1, 1000 );
     validator->setMandatory( true );
     n_ml->setValidator( validator );
@@ -174,36 +216,118 @@ public:
       return 0;
     };
 
-    sidebar_->elementAt(++row, 0)->addNew< Wt::WPushButton >( "Listen to ML" )->clicked().connect(
+    box->addNew< Wt::WBreak >();
+
+    box->addNew< Wt::WPushButton >( "Listen to ML" )->clicked().connect(
       [=]{
 	if( ignore_keys_ ) return; 
 	if( show_ml_ ){
 	  ignore_keys_ = true;
 
 	  int const nloop = get_n_ml();
-	  loop_autopilot( -1, 50, nloop );
+	  loop_autopilot( -1, gs_slider->value(), nloop );
 
 	  ignore_keys_ = false;
 	}
       }
     );
+  }
 
-    sidebar_->elementAt(++row, 0)->addNew< Wt::WPushButton >( "Run Hybrid" )->clicked().connect(
+  
+  void
+  make_recursion_box( int & row, Wt::WSlider * gs_slider ){
+    Wt::WGroupBox * recursive_box = sidebar_->elementAt(++row, 0)->addNew<Wt::WGroupBox>( "Recursion" );
+
+    Wt::WText * label = recursive_box->addNew<Wt::WText>( "5 moves ahead" );
+
+    recursive_box->addNew< Wt::WBreak >();
+
+    Wt::WSlider *slider = //sidebar_->elementAt(++row, 0)->addNew<Wt::WSlider>();
+      recursive_box->addNew<Wt::WSlider>();
+    slider->setTickInterval(1);
+    slider->setMinimum(3);
+    slider->setMaximum(7);
+    slider->setValue(5);
+
+    slider->valueChanged().connect(
+      [=](){
+	label->setText( std::to_string(slider->value()) + " moves ahead" );
+      }
+    );
+
+    recursive_box->addNew< Wt::WBreak >();
+
+    Wt::WPushButton * recurse = recursive_box->addNew< Wt::WPushButton >( "Run Recursion" );
+    recurse->clicked().connect(
+      [=]{
+	if( ignore_keys_ ) return; 
+	if( show_ml_ ){
+	  recurse->setEnabled( false );
+	  ignore_keys_ = true;
+
+	  switch( slider->value() ){
+	  case( 3 ):
+	    run_recursive_search< 3 >( gs_slider->value(), 8 );
+	    break;
+	  case( 4 ):
+	    run_recursive_search< 4 >( gs_slider->value(), 8 );
+	    break;
+	  case( 5 ):
+	    run_recursive_search< 5 >( gs_slider->value(), 8 );
+	    break;
+	  case( 6 ):
+	    run_recursive_search< 6 >( gs_slider->value(), 8 );
+	    break;
+	  case( 7 ):
+	    run_recursive_search< 7 >( gs_slider->value(), 8 );
+	    break;
+	  default:
+	    assert( false );
+	  }
+
+	  ignore_keys_ = false;
+	  recurse->setEnabled( true );
+	}
+      }
+    );
+  }
+
+  void
+  make_hybrid_box( int & row, Wt::WSlider * gs_slider ){
+    Wt::WGroupBox * box = sidebar_->elementAt(++row, 0)->addNew<Wt::WGroupBox>( "Beat The Game" );
+
+    box->addNew< Wt::WPushButton >( "Skip to Risky" )->clicked().connect(
+      [=]{
+	if( ignore_keys_ ) return; 
+	if( show_ml_ ){
+	  ignore_keys_ = true;
+	  skip_to_risky_w_recursion( gs_slider->value() );
+	  ignore_keys_ = false;
+	}
+      }
+    );
+
+    box->addNew< Wt::WBreak >();
+
+    box->addNew<Wt::WText>( "Warning: this will not stop once started!" );
+
+    box->addNew< Wt::WBreak >();
+
+    box->addNew< Wt::WPushButton >( "Run Hybrid" )->clicked().connect(
       [=]{
 	if( ignore_keys_ ) return; 
 	if( show_ml_ ){
 	  ignore_keys_ = true;
 
-	  int const nloop = get_n_ml();
-	  loop_smart_autopilot( 50, nloop );
+	  loop_smart_autopilot( gs_slider->value() );
 
 	  ignore_keys_ = false;
 	}
       }
     );
-
 
   }
+
 
   void init_listeners(){
     //keyWentDown().connect( this, & BoardWidget::keyDown );
@@ -301,7 +425,7 @@ protected:
     unsigned int nloop = 300 );
 
   void
-  loop_smart_autopilot( int ms = 250, int nloop = 100000 );
+  loop_smart_autopilot( int ms = 250 );
 
   GameOverBool
   skip_to_risky( int ms = 250 );
@@ -546,8 +670,7 @@ BoardWidget< GAME >::loop_autopilot(
 template< typename GAME >
 void
 BoardWidget< GAME >::loop_smart_autopilot(
-  int const ms,
-  int nloop
+  int const ms
 ){
   while( true ){
     if( skip_to_risky_w_recursion( ms ) ) break;
@@ -624,7 +747,6 @@ GameOverBool
 BoardWidget< GAME >::skip_to_risky_w_recursion(
   int const ms
 ){
-  //for( unsigned int i = 0; i < 1000; ++i ) { //why this?
   while( true ) {
 
     bool const recursion_success = run_recursive_search< 4 >( ms, 7 );
@@ -887,6 +1009,7 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
   break;
 
   case( ' ' ):
+  case( ';' ):
     if( dump_training_data_ ) logger_.log( game_, Key::SPACE );
     handle_move( -1, -1, false, true );
     break;
@@ -913,12 +1036,12 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
     show_ml_ = !show_ml_;
     update();	
     update_sidebar();
-    break;*/
+    break;
 
   case( '4' ):
     show_lines_ = !show_lines_;
     update();	
-    break;
+    break;*/
 
   case( '5' ):
     dump_training_data_ = !dump_training_data_;

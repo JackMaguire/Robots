@@ -49,9 +49,9 @@ public:
 	"<p>Teleport: T</p>"
 	"<p>Wait: SpaceBar</p>"
 	"<p>See Last State: '?'</p>"
-	"<p>Toggle Safe Mode: '1' (human will be lighter green in safe mode)</p>"
-	"<p>Toggle Scout Mode: '2'</p>"
-	"<p>Toggle ML Mode: '3'</p>"
+	//"<p>Toggle Safe Mode: '1' (human will be lighter green in safe mode)</p>"
+	//"<p>Toggle Scout Mode: '2'</p>"
+	//"<p>Toggle ML Mode: '3'</p>"
 	"<p>Sometimes you need to click on the board for it to start listening to your keys</p>",
 	Wt::Icon::Warning, Wt::StandardButton::Yes //| Wt::StandardButton::No
       )

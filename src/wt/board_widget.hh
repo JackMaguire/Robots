@@ -107,6 +107,9 @@ private:
   const PaintPalette palette_;
 
   ScoreWidget * sidebar_;
+  // NEVER nullptr
+  // NEVER changes
+
   Wt::WApplication * app_;
 
   //GCN gcn_;
@@ -142,6 +145,44 @@ public:
     init_listeners();
 
     cached_board_ = game_.board();
+
+    set_up_buttons();
+  }
+
+  void set_up_buttons(){
+
+    int row = 5;
+
+    Wt::WLineEdit * n_ml = sidebar_->elementAt(++row, 1)->addNew< Wt::WLineEdit >( "1" );
+      
+    sidebar_->elementAt(row, 0)->addNew< Wt::WPushButton >( "Listen to ML" )->clicked().connect(
+      [=]{
+	if( ignore_keys_ ) return; 
+	if( show_ml_ ){
+	  ignore_keys_ = true;
+
+	  int const nloop = std::stoi( n_ml->text().toUTF8() );
+
+	  for( int i = 0; i < nloop; ++i ){
+	    AutoPilotResult const apr = run_autopilot( game_, current_prediction_ );
+
+	    bool const game_over = handle_move( apr.dx, apr.dy,
+	      apr.apre == AutoPilotResultEnum::TELEPORT,
+	      apr.apre == AutoPilotResultEnum::CASCADE );
+
+	    this->update();
+	    app_->processEvents();
+
+	    if( game_over ) break;
+
+	    std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
+
+	  }
+	}
+	ignore_keys_ = false;
+      }
+    );
+
   }
 
   void init_listeners(){

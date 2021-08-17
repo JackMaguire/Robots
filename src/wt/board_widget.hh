@@ -181,26 +181,27 @@ public:
 	  ignore_keys_ = true;
 
 	  int const nloop = get_n_ml();
+	  loop_autopilot( -1, 50, nloop );
 
-	  for( int i = 0; i < nloop; ++i ){
-	    AutoPilotResult const apr = run_autopilot( game_, current_prediction_ );
-
-	    bool const game_over = handle_move( apr.dx, apr.dy,
-	      apr.apre == AutoPilotResultEnum::TELEPORT,
-	      apr.apre == AutoPilotResultEnum::CASCADE );
-
-	    this->update();
-	    app_->processEvents();
-
-	    if( game_over ) break;
-
-	    std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
-
-	  }
+	  ignore_keys_ = false;
 	}
-	ignore_keys_ = false;
       }
     );
+
+    sidebar_->elementAt(++row, 0)->addNew< Wt::WPushButton >( "Run Hybrid" )->clicked().connect(
+      [=]{
+	if( ignore_keys_ ) return; 
+	if( show_ml_ ){
+	  ignore_keys_ = true;
+
+	  int const nloop = get_n_ml();
+	  loop_smart_autopilot( 50, nloop );
+
+	  ignore_keys_ = false;
+	}
+      }
+    );
+
 
   }
 
@@ -300,7 +301,7 @@ protected:
     unsigned int nloop = 300 );
 
   void
-  loop_smart_autopilot( int ms = 250 );
+  loop_smart_autopilot( int ms = 250, int nloop = 100000 );
 
   GameOverBool
   skip_to_risky( int ms = 250 );
@@ -545,10 +546,10 @@ BoardWidget< GAME >::loop_autopilot(
 template< typename GAME >
 void
 BoardWidget< GAME >::loop_smart_autopilot(
-  int const ms
+  int const ms,
+  int nloop
 ){
   while( true ){
-    //if( skip_to_risky( ms ) ) break;
     if( skip_to_risky_w_recursion( ms ) ) break;
 
     if( run_recursive_search< 6 >( ms, 7 ) ) continue;
@@ -623,7 +624,8 @@ GameOverBool
 BoardWidget< GAME >::skip_to_risky_w_recursion(
   int const ms
 ){
-  for( unsigned int i = 0; i < 1000; ++i ) {
+  //for( unsigned int i = 0; i < 1000; ++i ) { //why this?
+  while( true ) {
 
     bool const recursion_success = run_recursive_search< 4 >( ms, 7 );
     if( recursion_success ){

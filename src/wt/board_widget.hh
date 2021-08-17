@@ -7,6 +7,7 @@
 #include <Wt/WInteractWidget.h>
 #include <Wt/WMessageBox.h>
 #include <Wt/WApplication.h>
+#include <Wt/WIntValidator.h>
 
 #include "robots.hh"
 #include "gcn.hh"
@@ -119,9 +120,9 @@ private:
   Board cached_board_;
   bool display_cached_board_;
 
-  bool safe_mode_ = false;
+  bool safe_mode_ = true;
   bool show_safe_moves_ = true;
-  bool show_ml_ = false;
+  bool show_ml_ = true;
   bool show_lines_ = false;
 
   bool ignore_keys_ = false;
@@ -151,17 +152,35 @@ public:
 
   void set_up_buttons(){
 
-    int row = 5;
+    int row = 2;
 
-    Wt::WLineEdit * n_ml = sidebar_->elementAt(++row, 1)->addNew< Wt::WLineEdit >( "1" );
+    Wt::WLineEdit * n_ml = sidebar_->elementAt(++row, 0)->addNew< Wt::WLineEdit >( "1" );
+    auto validator = std::make_shared< Wt::WIntValidator >( 1, 1000 );
+    validator->setMandatory( true );
+    n_ml->setValidator( validator );
       
-    sidebar_->elementAt(row, 0)->addNew< Wt::WPushButton >( "Listen to ML" )->clicked().connect(
+    auto && get_n_ml = [=]() -> int {
+      try {
+	int const answer = std::stoi( n_ml->text().toUTF8() );
+
+	if( answer < 0 or answer > 1000 ){
+	  n_ml->setText( "Please provide an integer between 0 and 1000" );
+	} else {
+	  return answer;
+	}
+      } catch( ... ){
+	n_ml->setText( "Please provide an integer" );
+      }
+      return 0;
+    };
+
+    sidebar_->elementAt(++row, 0)->addNew< Wt::WPushButton >( "Listen to ML" )->clicked().connect(
       [=]{
 	if( ignore_keys_ ) return; 
 	if( show_ml_ ){
 	  ignore_keys_ = true;
 
-	  int const nloop = std::stoi( n_ml->text().toUTF8() );
+	  int const nloop = get_n_ml();
 
 	  for( int i = 0; i < nloop; ++i ){
 	    AutoPilotResult const apr = run_autopilot( game_, current_prediction_ );
@@ -751,7 +770,14 @@ BoardWidget< GAME >::stall_for_time(
 template< typename GAME >
 void
 BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
-  if( ignore_keys_ ) return;
+  if( ignore_keys_ ){
+    switch( e.charCode() ){
+    case( '4' ):
+      break;
+    default:
+      return;
+    }
+  }
 
   ignore_keys_ = true;
 
@@ -869,7 +895,7 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
 
 
     //MODES
-  case( '1' ):
+  /*case( '1' ):
     safe_mode_ = !safe_mode_;
     update();
     update_sidebar();
@@ -885,7 +911,7 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
     show_ml_ = !show_ml_;
     update();	
     update_sidebar();
-    break;
+    break;*/
 
   case( '4' ):
     show_lines_ = !show_lines_;

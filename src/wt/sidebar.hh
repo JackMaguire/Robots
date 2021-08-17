@@ -31,14 +31,14 @@ public:
        }
        );
 
-    safe_ = elementAt(3, 0)->addNew< Wt::WLineEdit >( "Safe Mode: off" );
-    safe_->setReadOnly( true );
+    //safe_ = elementAt(3, 0)->addNew< Wt::WLineEdit >( "Safe Mode: off" );
+    //safe_->setReadOnly( true );
 
-    scout_ = elementAt(4, 0)->addNew< Wt::WLineEdit >( "Scout Mode: on" );
-    scout_->setReadOnly( true );
+    //scout_ = elementAt(4, 0)->addNew< Wt::WLineEdit >( "Scout Mode: on" );
+    //scout_->setReadOnly( true );
 
-    ml_ = elementAt(5, 0)->addNew< Wt::WLineEdit >( "ML Mode: off" );
-    ml_->setReadOnly( true );
+    //ml_ = elementAt(5, 0)->addNew< Wt::WLineEdit >( "ML Mode: off" );
+    //ml_->setReadOnly( true );
   }
 
   void display_controls(){
@@ -68,18 +68,23 @@ public:
 
   
   template< typename GAME >
-  void update( GAME const & game, bool const safe_mode, bool const scout_mode, bool const ml_mode  ){
+  void update(
+    GAME const & game,
+    [[maybe_unused]] bool const safe_mode,
+    [[maybe_unused]] bool const scout_mode,
+    [[maybe_unused]] bool const ml_mode
+  ){
     score_->setText( "Score: " + std::to_string( game.score() ) );
     tele_->setText( "Teleports: " + std::to_string( game.n_safe_teleports_remaining()));
-    safe_->setText( "Safe Mode: " + std::string(safe_mode?"on":"off") );
-    scout_->setText( "Scout Mode: " + std::string(scout_mode?"on":"off") );
-    ml_->setText( "ML Mode: " + std::string(ml_mode?"on":"off") );
+    //safe_->setText( "Safe Mode: " + std::string(safe_mode?"on":"off") );
+    //scout_->setText( "Scout Mode: " + std::string(scout_mode?"on":"off") );
+    //ml_->setText( "ML Mode: " + std::string(ml_mode?"on":"off") );
   }
 
 private:
   Wt::WLineEdit * score_;
   Wt::WLineEdit * tele_;
-  Wt::WLineEdit * safe_;
-  Wt::WLineEdit * scout_;
-  Wt::WLineEdit * ml_;
+  //Wt::WLineEdit * safe_;
+  //Wt::WLineEdit * scout_;
+  //Wt::WLineEdit * ml_;
 };

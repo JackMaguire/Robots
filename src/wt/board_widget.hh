@@ -1011,7 +1011,7 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
     {
       std::string const board_str = game_.board().get_stringified_representation();
       wt_util::SingleStringDialog::add( app_->root(), board_str );
-      update();
+      //update();
     }
     break;
 
@@ -1022,10 +1022,10 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
 	[=]( std::string const & input ){
 	  try{
 	    game_.nonconst_board().load_from_stringified_representation( input );
+	    update();
 	  } catch( ... ){}
 	}
       );
-      update();
     }
     break;
 

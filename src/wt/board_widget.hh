@@ -12,6 +12,8 @@
 #include <Wt/WGroupBox.h>
 #include <Wt/WCheckBox.h>
 
+#include <wt_util/SingleStringDialog.hh>
+
 #include "robots.hh"
 #include "gcn.hh"
 #include "sidebar.hh"
@@ -897,6 +899,7 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
   if( ignore_keys_ ){
     switch( e.charCode() ){
     case( '4' ):
+    case( '=' ):
       break;
     default:
       return;
@@ -977,6 +980,7 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
     }
   break;
 
+  /*
   case( '6' ):
     run_recursive_search( 0, 8 );
   break;
@@ -1000,6 +1004,14 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
   case( '0' ):
     if( show_ml_ ) loop_autopilot( -1, 0 );
   break;
+  */
+
+  case( '=' ):
+    {
+      std::string const board_str = game_.board().get_stringified_representation();
+      wt_util::SingleStringDialog::add( app_->root(), board_str );
+    }
+    break;
 
 
   case( 't' ):

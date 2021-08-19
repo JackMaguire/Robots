@@ -13,6 +13,7 @@
 #include <Wt/WCheckBox.h>
 
 #include <wt_util/SingleStringDialog.hh>
+#include <wt_util/SinglePromptDialog.hh>
 
 #include "robots.hh"
 #include "gcn.hh"
@@ -1010,6 +1011,21 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
     {
       std::string const board_str = game_.board().get_stringified_representation();
       wt_util::SingleStringDialog::add( app_->root(), board_str );
+      update();
+    }
+    break;
+
+  case( '+' ):
+    {
+      wt_util::SinglePromptDialog::add(
+	app_->root(),"Board State", "",
+	[=]( std::string const & input ){
+	  try{
+	    game_.nonconst_board().load_from_stringified_representation( input );
+	  } catch( ... ){}
+	}
+      );
+      update();
     }
     break;
 

@@ -437,6 +437,10 @@ public:
     return board_;
   }
 
+  Board & nonconst_board() {
+    return board_;
+  }
+
   int n_safe_teleports_remaining() const {
     return n_safe_teleports_remaining_;
   }

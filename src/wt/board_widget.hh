@@ -868,7 +868,7 @@ BoardWidget< GAME >::stall_for_time(
 	Board copy( game_.board() );
 	MoveResult const move_result = copy.move_human( dx, dy );
 
-	if( move_result != MoveResult::CONTINUE ) break;
+	if( move_result != MoveResult::CONTINUE ) continue;
 
 	solution_found = copy.n_robots() == game_.board().n_robots();
 

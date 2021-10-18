@@ -1032,6 +1032,7 @@ BoardWidget< GAME >::keyDown( Wt::WKeyEvent const & e ){
 
   case( 't' ):
   case( 'T' ):
+  case( '[' ):
     if( dump_training_data_ ) logger_.log( game_, Key::T );
     handle_move( -1, -1, true );
   break;
